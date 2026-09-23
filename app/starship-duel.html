@@ -28,30 +28,48 @@ canvas{display:block}
 .tb.on{background:rgba(255,255,255,.4)}
 #rotate{position:fixed;inset:0;z-index:20;background:#000;color:#fff;display:none;align-items:center;justify-content:center;text-align:center;font-size:18px;padding:20px}
 @media (orientation:portrait) and (pointer:coarse){#rotate.need{display:flex}}
-.overlay{position:fixed;inset:0;background:rgba(0,0,10,.8);display:none;align-items:center;justify-content:center;z-index:10;padding:12px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,10,.82);display:none;align-items:center;justify-content:center;z-index:10;padding:12px}
 .overlay.show{display:flex}
-.panel{background:#10102a;border:2px solid #556;padding:16px 18px;max-width:560px;width:100%;text-align:center;max-height:100%;overflow:auto;touch-action:pan-y}
-.panel.wide{max-width:820px}
+.panel{background:#10102a;border:2px solid #556;padding:16px 18px;max-width:600px;width:100%;text-align:center;max-height:100%;overflow:auto;touch-action:pan-y}
+.panel.wide{max-width:860px}
 .panel button{touch-action:manipulation}
 .panel h1{font-size:26px;color:#8cf;letter-spacing:3px;text-shadow:0 0 12px #48f}
 .panel h2{font-size:20px;margin-bottom:10px}
 .panel p{font-size:13px;color:#aaa;margin:6px 0;line-height:1.4}
+details{text-align:left;border:1px solid #334;margin:10px 0;padding:6px 10px;background:#0c0c22}
+summary{cursor:pointer;font-weight:bold;font-size:16px;padding:4px 0;color:#8cf}
 .frow{margin:10px 0;text-align:left}
 .frow .lbl{font-size:13px;color:#ddd;margin-bottom:5px;font-weight:bold}
+.fdesc{font-size:12px;color:#999;margin-top:4px;line-height:1.35}
 .seg{display:flex;gap:6px}
 button{font-family:inherit;color:#fff;background:#22223a;border:2px solid #556;border-radius:6px;cursor:pointer}
 .seg button{flex:1;height:38px;font-size:13px}
 .seg button.on{background:#1a4a8a;border-color:#6af}
+input,select,textarea{font-family:inherit;font-size:16px;background:#070716;color:#fff;border:1px solid #556;border-radius:4px;padding:4px 6px;
+  -webkit-user-select:text;user-select:text;touch-action:manipulation}
+select{width:100%;height:38px}
+textarea{width:100%;margin-top:8px;font-size:14px;touch-action:auto;resize:vertical}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 12px;margin-top:10px}
+.fld{display:flex;flex-direction:column;font-size:11px;color:#bbb;gap:3px}
+.fld input{width:100%}
+.fld.changed span{color:#fc6}
+.sinfo{margin-top:10px;font-size:12px;color:#ccc;line-height:1.45}
+.tag{font-weight:bold;padding:0 3px;border-radius:3px;margin-right:4px}
+.tag.w{color:#fb5;background:rgba(255,180,80,.12)}
+.tag.s{color:#8cf;background:rgba(120,200,255,.12)}
+.small{font-size:14px;padding:6px 12px;margin-top:8px}
+.iorow{display:flex;gap:8px;flex-wrap:wrap}
 .big{width:100%;height:50px;margin-top:10px;background:#1a4a8a;border-color:#6af;font-weight:bold;font-size:18px}
 .big.alt{background:#22223a;border-color:#556}
 .help{font-size:12px;color:#999;text-align:left;margin-top:10px;line-height:1.45}
-.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
 .pcard{text-align:left;padding:8px;border-radius:8px;background:#181836;border:2px solid #445;color:#ddd;display:flex;flex-direction:column;gap:4px}
 .pcard:hover{border-color:#8cf}
 .pcard canvas{align-self:center}
 .pcard b{font-size:15px;color:#fff}
-.pcard small{font-size:11px;color:#aaa;line-height:1.3}
-.pcard i{font-style:normal;font-size:11px;color:#8cf}
+.pcard b em{font-style:normal;font-weight:normal;color:#8cf;font-size:12px}
+.pcard i{font-style:normal;font-size:11px;color:#9ab}
+.pcard .sinfo{margin-top:2px;font-size:11px}
 </style>
 </head>
 <body>
@@ -71,9 +89,30 @@ window.addEventListener('error', function (e) {
 <div id="menu" class="overlay show"><div class="panel">
   <h1>ЗВЁЗДНАЯ СХВАТКА</h1>
   <p>дуэль кораблей по мотивам Star Control</p>
-  <div id="opts"></div>
+  <details open><summary>Игра</summary><div id="opts"></div></details>
+  <details><summary>Физика и гравитация</summary><div id="physBox"></div></details>
+  <details><summary>Корабли</summary>
+    <p style="text-align:left">Выберите корабль и правьте его параметры. Изменённые поля подсвечены. Правки применяются к кораблям, выходящим в бой после изменения.</p>
+    <select id="shipSel"></select>
+    <div id="shipInfo" class="sinfo"></div>
+    <div id="shipBox" class="fields"></div>
+    <button class="small" id="shipReset">Сбросить этот корабль</button>
+  </details>
+  <details><summary>Сохранить / загрузить настройки</summary>
+    <p style="text-align:left">Все настройки в виде текста (формат INI с комментариями): скачайте, поправьте в редакторе, загрузите обратно.</p>
+    <div class="iorow">
+      <button class="small" id="expBtn">Скачать файл</button>
+      <button class="small" id="impBtn">Загрузить файл</button>
+      <button class="small" id="showBtn">Показать текст</button>
+    </div>
+    <input type="file" id="impFile" accept=".ini,.txt,text/plain" style="display:none">
+    <textarea id="cfgText" rows="8" spellcheck="false" placeholder="Сюда можно вставить текст настроек"></textarea>
+    <div class="iorow"><button class="small" id="applyBtn">Применить текст</button></div>
+    <div id="ioMsg" class="fdesc"></div>
+  </details>
   <button class="big" id="startBtn">В БОЙ!</button>
   <button class="big alt" id="resumeBtn" style="display:none">Продолжить</button>
+  <button class="small" id="resetAll">Сбросить все настройки</button>
   <div class="help" id="help"></div>
 </div></div>
 
@@ -99,41 +138,93 @@ const irnd = (a, b) => Math.floor(rnd(a, b + 1));
 function showErr(e){ const d = $('err'); d.style.display = 'block'; d.textContent += 'Ошибка: ' + ((e && e.message) || e) + '\n'; }
 
 // ================= КОНСТАНТЫ =================
-const W = 960, H = 540, WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110;
-const GM = 5.4e6, GMAX = 420, GRANGE = 1000, DT = 1 / 120;
+const W = 960, H = 540, WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110, DT = 1 / 120, DEG = Math.PI / 180;
 const ZOOMS = [1.1, 0.75, 0.5, 0.32];
 const wd = (a, b) => { let d = a - b; d -= Math.round(d / WW) * WW; return d; };
 const wrapW = v => ((v % WW) + WW) % WW;
 const angDiff = (a, b) => { let d = a - b; d -= Math.round(d / (2 * Math.PI)) * 2 * Math.PI; return d; };
 const dist2 = (a, b) => Math.hypot(wd(a.x, b.x), wd(a.y, b.y));
 
+// ---- подписи и диапазоны параметров кораблей ----
+const LABELS = {
+  crew:'Экипаж на старте', crewMax:'Экипаж максимум', batt:'Батарея (макс.)', regen:'Регенерация: сек на 1 ед.',
+  turn:'Поворот, °/с', thrust:'Тяга (ускорение)', vmax:'Макс. скорость', mass:'Масса (столкновения)',
+  fCost:'Оружие: цена', fCd:'Оружие: перезарядка, с', fDmg:'Оружие: урон', fSpd:'Оружие: скорость снаряда',
+  fLife:'Оружие: жизнь снаряда, с', fRange:'Оружие: дальность', homing:'Самонаведение, °/с',
+  sCost:'Спец: цена', sCd:'Спец: перезарядка, с', sRange:'Спец: дальность', sDmg:'Спец: урон',
+  sSpd:'Спец: скорость снаряда', sLife:'Спец: жизнь снаряда, с',
+  fighters:'Истребителей за запуск', fighterLife:'Истребитель: время полёта, с', fighterDmg:'Истребитель: урон',
+  gloryDmg:'Взрыв: урон в центре', gloryR:'Взрыв: радиус', stealMin:'Песня: мин. экипажа', stealMax:'Песня: макс. экипажа',
+  insultGain:'Оскорбление: + батареи', rebirth:'Шанс перерождения, %',
+};
+const RANGES = {
+  crew:[1,99,1], crewMax:[1,99,1], batt:[1,99,1], regen:[0.02,5,0.01], turn:[20,720,1], thrust:[0,2000,10], vmax:[50,1000,10], mass:[0.5,50,0.5],
+  fCost:[0,50,1], fCd:[0.02,5,0.01], fDmg:[0,50,1], fSpd:[50,2000,10], fLife:[0.1,10,0.05], fRange:[50,1000,10], homing:[0,720,5],
+  sCost:[0,50,1], sCd:[0,10,0.05], sRange:[50,1500,10], sDmg:[0,50,1], sSpd:[50,2000,10], sLife:[0.1,10,0.1],
+  fighters:[1,8,1], fighterLife:[1,30,0.5], fighterDmg:[0,10,1], gloryDmg:[0,99,1], gloryR:[50,800,10],
+  stealMin:[0,20,1], stealMax:[0,20,1], insultGain:[0,20,1], rebirth:[0,100,5],
+};
+const COMMON = ['crew','crewMax','batt','regen','turn','thrust','vmax','mass'];
+
 const SHIPS = [
-  {id:'bastion', name:'Бастион', role:'Крейсер. Самонаводящиеся ядерные ракеты; спец — лазер ПРО сбивает ближайший снаряд или истребитель.',
-   crew:18, crewMax:18, batt:18, regen:0.45, turn:2.6, thrust:240, vmax:210, mass:6, r:18, fireCd:0.8, specCd:0.3, pref:420, frange:800, pspd:300,
+  {id:'bastion', name:'Бастион', role:'крейсер', r:18, pref:420, frange:800,
+   weapon:'Самонаводящаяся ядерная ракета: урон {fDmg}, цена {fCost}. Разгоняется до {fSpd}.',
+   special:'Лазер ПРО: сбивает ближайший вражеский снаряд или истребитель в радиусе {sRange}; если их нет — бьёт по кораблю ({sDmg}). Цена {sCost}.',
+   p:{crew:18, crewMax:18, batt:18, regen:0.45, turn:150, thrust:240, vmax:210, mass:6,
+      fCost:9, fCd:0.8, fDmg:4, fSpd:420, fLife:3.2, homing:140, sCost:4, sCd:0.3, sRange:170, sDmg:1},
+   keys:['fCost','fCd','fDmg','fSpd','fLife','homing','sCost','sCd','sRange','sDmg'],
    shape:[[1.2,0],[0.6,0.35],[-0.9,0.35],[-1,0.6],[-1.15,0.6],[-1.15,-0.6],[-1,-0.6],[-0.9,-0.35],[0.6,-0.35]],
    ditty:[60,64,67,72,67,72], wave:'square', captains:['Смирнов','Кравец','Орлова','Громов','Бойко']},
-  {id:'leviathan', name:'Левиафан', role:'Дредноут. Мощный плазменный залп; спец — истребители (каждый стоит 1 экипажа, вернувшись — отдаёт).',
-   crew:42, crewMax:42, batt:42, regen:0.28, turn:1.6, thrust:170, vmax:170, mass:10, r:26, fireCd:0.45, specCd:1.0, pref:360, frange:650, pspd:620,
+  {id:'leviathan', name:'Левиафан', role:'дредноут', r:26, pref:360, frange:650,
+   weapon:'Плазменный залп: урон {fDmg}, цена {fCost}.',
+   special:'Запуск {fighters} истребителей (цена {sCost}): каждый забирает 1 экипажа, летает {fighterLife} с и стреляет по {fighterDmg}; вернувшись, отдаёт экипаж обратно.',
+   p:{crew:42, crewMax:42, batt:42, regen:0.28, turn:92, thrust:170, vmax:170, mass:10,
+      fCost:6, fCd:0.45, fDmg:6, fSpd:620, fLife:1.3, sCost:8, sCd:1.0, fighters:2, fighterLife:9, fighterDmg:1},
+   keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd','fighters','fighterLife','fighterDmg'],
    shape:[[1.3,0],[0.3,0.25],[0.1,0.8],[-0.5,0.8],[-0.4,0.3],[-1,0.3],[-1,-0.3],[-0.4,-0.3],[-0.5,-0.8],[0.1,-0.8],[0.3,-0.25]],
    ditty:[36,43,41,36,31,36], wave:'sawtooth', captains:['Гроза-7','Властелин','Надсмотрщик','Молот']},
-  {id:'hare', name:'Заяц', role:'Трус. Слабая пушка вперёд; спец — самонаводящиеся ракеты НАЗАД. Лучшая тактика — удирать.',
-   crew:20, crewMax:20, batt:14, regen:0.22, turn:3.6, thrust:420, vmax:300, mass:4, r:13, fireCd:0.15, specCd:0.35, pref:380, frange:360, pspd:520,
+  {id:'hare', name:'Заяц', role:'трус', r:13, pref:380, frange:360,
+   weapon:'Слабая пушка вперёд: урон {fDmg}, цена {fCost}.',
+   special:'Самонаводящаяся ракета НАЗАД: урон {sDmg}, цена {sCost}. Лучшая тактика — удирать и стрелять через плечо.',
+   p:{crew:20, crewMax:20, batt:14, regen:0.22, turn:206, thrust:420, vmax:300, mass:4,
+      fCost:1, fCd:0.15, fDmg:1, fSpd:520, fLife:0.7, sCost:3, sCd:0.35, sDmg:2, sSpd:380, sLife:2.6, homing:183},
+   keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd','sDmg','sSpd','sLife','homing'],
    shape:'saucer', ditty:[72,69,65,62,60,55], wave:'triangle', captains:['Трусишка','Ах-ох','Бегунок','Пугало']},
-  {id:'wraith', name:'Призрак', role:'Засадник. Огнемёт вплотную; спец — маскировка (стрельба её снимает).',
-   crew:22, crewMax:22, batt:16, regen:0.3, turn:2.6, thrust:280, vmax:240, mass:6, r:16, fireCd:0.07, specCd:0.4, pref:90, frange:150, pspd:360, edge:true,
+  {id:'wraith', name:'Призрак', role:'засадник', r:16, pref:90, frange:150, edge:true,
+   weapon:'Огнемёт вплотную: урон {fDmg} за струю, цена {fCost}. Дальность маленькая.',
+   special:'Маскировка (цена {sCost}): почти невидим, робот теряет цель, батарея не заряжается. Выстрел или повторное нажатие снимает маскировку.',
+   p:{crew:22, crewMax:22, batt:16, regen:0.3, turn:150, thrust:280, vmax:240, mass:6,
+      fCost:1, fCd:0.07, fDmg:1, fSpd:360, fLife:0.38, sCost:3, sCd:0.4},
+   keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd'],
    shape:[[1.2,0.15],[0.2,0.5],[-0.8,1.0],[-0.4,0.2],[-1,0],[-0.4,-0.2],[-0.8,-1.0],[0.2,-0.5],[1.2,-0.15]],
    ditty:[50,53,49,46,45], wave:'sawtooth', captains:['Тень','Шёпот','Кошмар','Мрак']},
-  {id:'blink', name:'Блинк', role:'Мерцающий. Безынерционный, гравитации не подвержен, автонаводящийся лазер; спец — случайный телепорт.',
-   crew:6, crewMax:6, batt:20, regen:0.1, turn:5, thrust:0, vmax:320, mass:1, r:10, fireCd:0.12, specCd:0.6, pref:200, frange:260, pspd:9999, noGrav:true,
+  {id:'blink', name:'Блинк', role:'мерцающий', r:10, pref:200, noGrav:true, noThrust:true,
+   weapon:'Автонаводящийся лазер: сам бьёт врага в радиусе {fRange}, урон {fDmg}, цена {fCost}.',
+   special:'Случайный телепорт, цена {sCost}. Корабль безынерционный и не подвержен гравитации.',
+   p:{crew:6, crewMax:6, batt:20, regen:0.1, turn:286, thrust:0, vmax:320, mass:1,
+      fCost:2, fCd:0.12, fDmg:1, fRange:260, sCost:3, sCd:0.6},
+   keys:['fCost','fCd','fDmg','fRange','sCost','sCd'],
    shape:'disc', ditty:[84,88,91,96,91,96], wave:'sine', captains:['Мерцающий','Пых','Нигде','Где-то']},
-  {id:'sting', name:'Жало', role:'Камикадзе. Крошечный и быстрый, иглы; спец — «Устройство славы»: нажать дважды — взрыв, уносящий врага.',
-   crew:6, crewMax:6, batt:4, regen:0.3, turn:4.5, thrust:520, vmax:330, mass:1, r:8, fireCd:0.18, specCd:0, pref:0, frange:300, pspd:560, edge:true,
+  {id:'sting', name:'Жало', role:'камикадзе', r:8, pref:0, frange:300, edge:true,
+   weapon:'Иглы: урон {fDmg}, цена {fCost}.',
+   special:'«Устройство славы»: нажать дважды — взрыв радиусом {gloryR}, до {gloryDmg} урона в центре. Сам корабль гибнет.',
+   p:{crew:6, crewMax:6, batt:4, regen:0.3, turn:258, thrust:520, vmax:330, mass:1,
+      fCost:1, fCd:0.18, fDmg:1, fSpd:560, fLife:0.55, gloryDmg:16, gloryR:220},
+   keys:['fCost','fCd','fDmg','fSpd','fLife','gloryDmg','gloryR'],
    shape:[[1.3,0],[-0.8,0.8],[-0.4,0],[-0.8,-0.8]], ditty:[67,67,74,79,74,79], wave:'square', captains:['Храбрец','Кроха','Бах','Последний']},
-  {id:'siren', name:'Сирена', role:'Похитительница. Кинжальные выстрелы; спец — песня: экипаж врага вылетает в космос, подберите его (до 42).',
-   crew:12, crewMax:42, batt:16, regen:0.3, turn:3.2, thrust:340, vmax:270, mass:3, r:13, fireCd:0.25, specCd:1.0, pref:280, frange:520, pspd:560,
+  {id:'siren', name:'Сирена', role:'похитительница', r:13, pref:280, frange:520,
+   weapon:'Кинжальный выстрел: урон {fDmg}, цена {fCost}.',
+   special:'Песня (цена {sCost}, дальность {sRange}): {stealMin}–{stealMax} экипажа врага вылетают в космос. Подберите их к себе (до {crewMax}).',
+   p:{crew:12, crewMax:42, batt:16, regen:0.3, turn:183, thrust:340, vmax:270, mass:3,
+      fCost:1, fCd:0.25, fDmg:2, fSpd:560, fLife:1.0, sCost:5, sCd:1.0, sRange:360, stealMin:2, stealMax:6},
+   keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd','sRange','stealMin','stealMax'],
    shape:[[1.3,0],[0.3,0.45],[-0.9,0.3],[-1.1,0],[-0.9,-0.3],[0.3,-0.45]], ditty:[69,72,76,81,76,72], wave:'triangle', captains:['Лорелея','Мелодия','Ария','Нимфа']},
-  {id:'parrot', name:'Попугай', role:'Задира. Тройная пушка (вперёд и в стороны); спец — оскорбление заряжает батарею. 50% шанс переродиться.',
-   crew:8, crewMax:8, batt:12, regen:1.5, turn:4, thrust:480, vmax:320, mass:1, r:9, fireCd:0.12, specCd:0.6, pref:160, frange:300, pspd:500,
+  {id:'parrot', name:'Попугай', role:'задира', r:9, pref:160, frange:300,
+   weapon:'Тройная пушка — вперёд и в обе стороны: урон {fDmg} каждым стволом, цена {fCost}.',
+   special:'Оскорбление: +{insultGain} к батарее (сама она почти не заряжается). После гибели — {rebirth}% шанс переродиться.',
+   p:{crew:8, crewMax:8, batt:12, regen:1.5, turn:229, thrust:480, vmax:320, mass:1,
+      fCost:1, fCd:0.12, fDmg:1, fSpd:500, fLife:0.6, sCd:0.6, insultGain:3, rebirth:50},
+   keys:['fCost','fCd','fDmg','fSpd','fLife','sCd','insultGain','rebirth'],
    shape:[[1.2,0],[0.2,0.3],[-0.4,1.0],[-0.3,0.2],[-1,0.3],[-0.8,0],[-1,-0.3],[-0.3,-0.2],[-0.4,-1.0],[0.2,-0.3]],
    ditty:[76,79,76,84,72,76], wave:'square', captains:['Крикун','Пернатый','Балабол','Кеша']},
 ];
@@ -150,22 +241,47 @@ const OPTS = [
   {k:'mode', label:'Режим', opts:[['ai','Против робота'],['pvp','Двое на одном устройстве']]},
   {k:'diff', label:'Сложность робота', opts:[['easy','Легко'],['normal','Средне'],['hard','Сложно']]},
   {k:'fleet', label:'Кораблей во флоте', opts:[['3','3'],['5','5'],['8','Все 8']]},
-  {k:'planet', label:'Планета с гравитацией', opts:[['on','Да'],['off','Нет']]},
-  {k:'asteroids', label:'Астероиды', opts:[['on','Да'],['off','Нет']]},
+  {k:'planet', label:'Планета', opts:[['on','Есть'],['off','Нет']]},
   {k:'sound', label:'Звук', opts:[['on','Вкл'],['off','Выкл']]},
 ];
-const DEFAULT_CFG = {mode:'ai', diff:'normal', fleet:'5', planet:'on', asteroids:'on', sound:'on'};
-const KEY = 'melee_cfg_v1';
+const PHYS_UI = [
+  ['gravity','Сила гравитации, %',0,400,5,'100 — стандарт, 0 — планета не притягивает.'],
+  ['gRange','Радиус гравитации',200,3000,50,'На каком расстоянии от центра планеты действует притяжение.'],
+  ['slingOut','Рогатка: тяга на выходе, %',0,100,5,'Насколько сильно планета тянет, когда вы от неё удаляетесь. 100 — честная физика без разгона, меньше — мощнее рогатка.'],
+  ['overCap','Предел разгона, % от макс. скорости',100,500,10,'Выше этого не разогнаться даже гравитацией.'],
+  ['decay','Гашение лишней скорости, %/с',0,200,5,'Как быстро скорость выше обычной гаснет вне гравитационного колодца. 0 — не гаснет.'],
+  ['planetDmg','Удар о планету: урон',0,20,1,'Сколько экипажа стоит касание планеты.'],
+  ['asteroids','Астероидов на поле',0,20,1,''],
+];
+const DEFAULT_PHYS = {gravity:100, gRange:1300, slingOut:45, overCap:220, decay:25, planetDmg:1, asteroids:6};
+const DEFAULT_GAME = {mode:'ai', diff:'normal', fleet:'5', planet:'on', sound:'on'};
+const KEY = 'melee_cfg_v2';
 const store = (() => { try { const s = window.localStorage; s.setItem('__t','1'); s.removeItem('__t'); return s; } catch (_) { return null; } })();
+function freshCfg(){ return Object.assign({}, DEFAULT_GAME, {phys:Object.assign({}, DEFAULT_PHYS), ships:{}}); }
 function loadCfg(){
-  const c = Object.assign({}, DEFAULT_CFG);
+  const c = freshCfg();
   let src = null;
-  try { if (store) src = JSON.parse(store.getItem(KEY) || 'null'); } catch (_) {}
-  if (src && typeof src === 'object') for (const o of OPTS) if (o.opts.some(x => x[0] === src[o.k])) c[o.k] = src[o.k];
+  try { if (store) src = JSON.parse(store.getItem(KEY) || store.getItem('melee_cfg_v1') || 'null'); } catch (_) {}
+  if (!src || typeof src !== 'object') return c;
+  for (const o of OPTS) if (o.opts.some(x => x[0] === src[o.k])) c[o.k] = src[o.k];
+  if (src.phys && typeof src.phys === 'object')
+    for (const [k, , mn, mx] of PHYS_UI) { const v = src.phys[k]; if (typeof v === 'number' && isFinite(v)) c.phys[k] = clamp(v, mn, mx); }
+  if (src.ships && typeof src.ships === 'object')
+    for (const d of SHIPS) {
+      const s = src.ships[d.id]; if (!s || typeof s !== 'object') continue;
+      const o = Object.assign({}, d.p);
+      for (const k in d.p) { const v = s[k]; if (typeof v === 'number' && isFinite(v)) o[k] = clamp(v, RANGES[k][0], RANGES[k][1]); }
+      c.ships[d.id] = o;
+    }
   return c;
 }
 function saveCfg(){ try { if (store) store.setItem(KEY, JSON.stringify(cfg)); } catch (_) {} }
 let cfg = loadCfg();
+const effP = d => Object.assign({}, d.p, cfg.ships[d.id] || {});
+const shipKeys = d => COMMON.filter(k => !(d.noThrust && k === 'thrust')).concat(d.keys);
+const fmt = (str, p) => str.replace(/\{(\w+)\}/g, (_, k) => p[k] !== undefined ? p[k] : '?');
+const infoHTML = (d, p) => `<div><span class="tag w">[оружие]</span>${fmt(d.weapon, p)}</div><div><span class="tag s">[спец]</span>${fmt(d.special, p)}</div>`;
+const phys = () => cfg.phys;
 
 // ================= СОСТОЯНИЕ =================
 const canvas = $('game'), ctx = canvas.getContext('2d');
@@ -277,8 +393,9 @@ window.addEventListener('keydown', () => audio());
 
 // ================= КОРАБЛИ =================
 function makeShip(sd, ti){
-  const d = SHIPS[ti];
-  return {side:sd.i, sd, def:d, x:0, y:0, vx:0, vy:0, a:0, crew:d.crew, batt:d.batt, regenT:0, cdF:0, cdS:0, hitCd:0,
+  const d = SHIPS[ti], p = effP(d);
+  p.crewMax = Math.max(p.crewMax, p.crew);
+  return {side:sd.i, sd, def:d, p, x:0, y:0, vx:0, vy:0, a:0, crew:p.crew, batt:p.batt, regenT:0, cdF:0, cdS:0, hitCd:0,
     alive:true, cloak:false, armed:0, inv:0.8, prevS:false, thr:false,
     captain:d.captains[irnd(0, d.captains.length - 1)],
     ai:{t:0, desA:0, thrust:false, fire:false, pulse:false, lx:PX, ly:PY, lvx:0, lvy:0}};
@@ -304,87 +421,89 @@ function shoot(s, o){
   shots.push({x:wrapW(s.x + Math.cos(a) * off), y:wrapW(s.y + Math.sin(a) * off),
     vx:Math.cos(a) * o.speed + (o.inherit ? s.vx : 0), vy:Math.sin(a) * o.speed + (o.inherit ? s.vy : 0),
     a, spd:o.speed, acc:o.acc || 0, vmax:o.vmax || o.speed, homing:o.homing || 0,
-    dmg:o.dmg, life:o.life, r:o.r || 3, kind:o.kind, col:o.col, side:s.side, age:0});
+    dmg:o.dmg, life:o.life, max:o.life, r:o.r || 3, kind:o.kind, col:o.col, side:s.side, age:0});
 }
 function beam(x1, y1, x2, y2, col){ beams.push({x1, y1, x2, y2, col, t:0.09}); }
 function doFire(s){
-  const id = s.def.id;
+  const id = s.def.id, p = s.p;
   switch (id) {
     case 'bastion':
-      if (!pay(s, 9)) return false;
-      shoot(s, {speed:150, acc:450, vmax:420, homing:2.4, dmg:4, life:3.2, r:5, kind:'nuke', col:'#ffd23f'}); sfx('shot'); return true;
+      if (!pay(s, p.fCost)) return false;
+      shoot(s, {speed:150, acc:450, vmax:p.fSpd, homing:p.homing * DEG, dmg:p.fDmg, life:p.fLife, r:5, kind:'nuke', col:'#ffd23f'}); sfx('shot'); return true;
     case 'leviathan':
-      if (!pay(s, 6)) return false;
-      shoot(s, {speed:620, dmg:6, life:1.3, r:6, kind:'bolt', col:'#7fff7f', inherit:true}); sfx('shot'); shake = Math.max(shake, 3); return true;
+      if (!pay(s, p.fCost)) return false;
+      shoot(s, {speed:p.fSpd, dmg:p.fDmg, life:p.fLife, r:6, kind:'bolt', col:'#7fff7f', inherit:true}); sfx('shot'); shake = Math.max(shake, 3); return true;
     case 'hare':
-      if (!pay(s, 1)) return false;
-      shoot(s, {speed:520, dmg:1, life:0.7, r:2.5, kind:'bolt', col:'#fff', inherit:true}); sfx('gun'); return true;
+      if (!pay(s, p.fCost)) return false;
+      shoot(s, {speed:p.fSpd, dmg:p.fDmg, life:p.fLife, r:2.5, kind:'bolt', col:'#fff', inherit:true}); sfx('gun'); return true;
     case 'wraith':
-      if (!pay(s, 1)) return false;
+      if (!pay(s, p.fCost)) return false;
       s.cloak = false;
-      shoot(s, {speed:360, ang:rnd(-0.12, 0.12), dmg:1, life:0.38, r:6, kind:'flame', col:'#ff8030', inherit:true}); sfx('gun'); return true;
+      shoot(s, {speed:p.fSpd, ang:rnd(-0.12, 0.12), dmg:p.fDmg, life:p.fLife, r:6, kind:'flame', col:'#ff8030', inherit:true}); sfx('gun'); return true;
     case 'blink': {
       const e = otherShip(s.side); if (!e) return false;
-      const d = dist2(e, s); if (d > 260 || (e.cloak && d > 90)) return false;
-      if (!pay(s, 2)) return false;
-      beam(s.x, s.y, e.x, e.y, '#8ff'); damage(e, 1, s.side); sfx('laser'); return true;
+      const d = dist2(e, s); if (d > p.fRange || (e.cloak && d > 90)) return false;
+      if (!pay(s, p.fCost)) return false;
+      beam(s.x, s.y, e.x, e.y, '#8ff'); damage(e, p.fDmg, s.side); sfx('laser'); return true;
     }
     case 'sting':
-      if (!pay(s, 1)) return false;
-      shoot(s, {speed:560, dmg:1, life:0.55, r:2.5, kind:'bolt', col:'#ff6', inherit:true}); sfx('gun'); return true;
+      if (!pay(s, p.fCost)) return false;
+      shoot(s, {speed:p.fSpd, dmg:p.fDmg, life:p.fLife, r:2.5, kind:'bolt', col:'#ff6', inherit:true}); sfx('gun'); return true;
     case 'siren':
-      if (!pay(s, 1)) return false;
-      shoot(s, {speed:560, dmg:2, life:1.0, r:3, kind:'bolt', col:'#f6f', inherit:true}); sfx('gun'); return true;
+      if (!pay(s, p.fCost)) return false;
+      shoot(s, {speed:p.fSpd, dmg:p.fDmg, life:p.fLife, r:3, kind:'bolt', col:'#f6f', inherit:true}); sfx('gun'); return true;
     case 'parrot':
-      if (!pay(s, 1)) return false;
-      for (const ang of [0, Math.PI / 2, -Math.PI / 2]) shoot(s, {speed:500, ang, dmg:1, life:0.6, r:2.5, kind:'bolt', col:'#ffb040', inherit:true});
+      if (!pay(s, p.fCost)) return false;
+      for (const ang of [0, Math.PI / 2, -Math.PI / 2]) shoot(s, {speed:p.fSpd, ang, dmg:p.fDmg, life:p.fLife, r:2.5, kind:'bolt', col:'#ffb040', inherit:true});
       sfx('gun'); return true;
   }
   return false;
 }
 function doSpec(s){
-  const id = s.def.id, e = otherShip(s.side);
+  const id = s.def.id, p = s.p, e = otherShip(s.side);
   switch (id) {
     case 'bastion': {
-      let best = null, bd = 170, kind = null;
+      let best = null, bd = p.sRange, kind = null;
       for (const sh of shots) if (sh.side !== s.side) { const d = dist2(sh, s); if (d < bd) { bd = d; best = sh; kind = 'shot'; } }
       for (const f of fighters) if (f.side !== s.side) { const d = dist2(f, s); if (d < bd) { bd = d; best = f; kind = 'fighter'; } }
-      if (!best && e && dist2(e, s) < 170 && !e.cloak) { best = e; kind = 'ship'; }
-      if (!best || !pay(s, 4)) return false;
+      if (!best && e && dist2(e, s) < p.sRange && !e.cloak) { best = e; kind = 'ship'; }
+      if (!best || !pay(s, p.sCost)) return false;
       beam(s.x, s.y, best.x, best.y, '#fff');
       if (kind === 'shot') { shots.splice(shots.indexOf(best), 1); sparks(best.x, best.y, 8, '#fff'); }
       else if (kind === 'fighter') { fighters.splice(fighters.indexOf(best), 1); boomFX(best.x, best.y, 14); }
-      else damage(best, 1, s.side);
+      else damage(best, p.sDmg, s.side);
       sfx('laser'); return true;
     }
     case 'leviathan': {
-      if (s.crew <= 3 || fighters.filter(f => f.mother === s).length >= 8 || !pay(s, 8)) return false;
-      s.crew -= 2;
-      for (const sg of [1, -1]) {
-        const a = s.a + Math.PI + sg * 0.7;
-        fighters.push({x:wrapW(s.x + Math.cos(a) * (s.def.r + 6)), y:wrapW(s.y + Math.sin(a) * (s.def.r + 6)), a:s.a, side:s.side, mother:s, life:9, cd:0.3});
+      const n = Math.round(p.fighters);
+      if (s.crew <= n + 1 || fighters.filter(f => f.mother === s).length >= 12 || !pay(s, p.sCost)) return false;
+      s.crew -= n;
+      for (let k = 0; k < n; k++) {
+        const sg = k % 2 ? -1 : 1, a = s.a + Math.PI + sg * (0.5 + 0.25 * Math.floor(k / 2));
+        fighters.push({x:wrapW(s.x + Math.cos(a) * (s.def.r + 6)), y:wrapW(s.y + Math.sin(a) * (s.def.r + 6)), a:s.a, side:s.side, mother:s, life:p.fighterLife, dmg:p.fighterDmg, cd:0.3});
       }
       sfx('shield'); return true;
     }
     case 'hare':
-      if (!pay(s, 3)) return false;
-      shoot(s, {speed:200, acc:300, vmax:380, ang:Math.PI, homing:3.2, dmg:2, life:2.6, r:4, kind:'missile', col:'#9f9'}); sfx('shot'); return true;
+      if (!pay(s, p.sCost)) return false;
+      shoot(s, {speed:200, acc:300, vmax:p.sSpd, ang:Math.PI, homing:p.homing * DEG, dmg:p.sDmg, life:p.sLife, r:4, kind:'missile', col:'#9f9'}); sfx('shot'); return true;
     case 'wraith':
       if (s.cloak) { s.cloak = false; return true; }
-      if (!pay(s, 3)) return false;
+      if (!pay(s, p.sCost)) return false;
       s.cloak = true; sfx('shield'); return true;
     case 'blink': {
-      if (!pay(s, 3)) return false;
+      if (!pay(s, p.sCost)) return false;
       ringFX(s.x, s.y, '#8ff');
-      const p = randomSpot(e, 200); s.x = p.x; s.y = p.y;
+      const q = randomSpot(e, 200); s.x = q.x; s.y = q.y;
       ringFX(s.x, s.y, '#8ff'); sfx('warp'); return true;
     }
     case 'sting':
       if (s.armed <= 0) { s.armed = 1.6; sfx('beep'); return true; }
       glory(s); return true;
     case 'siren': {
-      if (!e || e.crew <= 1 || dist2(e, s) > 360 || !pay(s, 5)) return false;
-      const steal = Math.min(e.crew - 1, irnd(2, 6));
+      if (!e || e.crew <= 1 || dist2(e, s) > p.sRange || !pay(s, p.sCost)) return false;
+      const lo = Math.round(p.stealMin), hi = Math.max(lo, Math.round(p.stealMax));
+      const steal = Math.min(e.crew - 1, irnd(lo, hi));
       e.crew -= steal;
       for (let k = 0; k < steal; k++) {
         const a = rnd(0, 6.283), sp = rnd(60, 150);
@@ -393,20 +512,20 @@ function doSpec(s){
       ringFX(s.x, s.y, '#f8f'); sfx('shield'); return true;
     }
     case 'parrot':
-      s.batt = Math.min(s.def.batt, s.batt + 3);
+      s.batt = Math.min(p.batt, s.batt + p.insultGain);
       bubbles.push({ship:s, text:INSULTS[irnd(0, INSULTS.length - 1)], t:1.6});
       return true;
   }
   return false;
 }
 function glory(s){
-  const R = 220;
+  const R = s.p.gloryR;
   boomFX(s.x, s.y, 90); ringFX(s.x, s.y, '#ff8');
   shake = 20; sfx('nuke');
   const e = otherShip(s.side);
-  if (e) { const d = dist2(e, s); if (d < R) damage(e, Math.max(1, Math.round(16 * (1 - d / R))), s.side); }
+  if (e) { const d = dist2(e, s); if (d < R) damage(e, Math.max(1, Math.round(s.p.gloryDmg * (1 - d / R))), s.side); }
   for (let i = fighters.length - 1; i >= 0; i--) if (fighters[i].side !== s.side && dist2(fighters[i], s) < R) fighters.splice(i, 1);
-  s.crew = 0; shipDie(s);
+  s.crew = 0; shipDie(s, true);
 }
 function damage(s, dmg, bySide){
   if (!s || !s.alive || s.inv > 0 || dmg <= 0) return;
@@ -415,10 +534,10 @@ function damage(s, dmg, bySide){
   if (s.crew <= 0) { s.crew = 0; shipDie(s); }
   else if (dmg >= 2 || Math.random() < 0.3) sfx('hurt');
 }
-function shipDie(s){
+function shipDie(s, noRebirth){
   if (!s.alive) return;
-  if (s.def.id === 'parrot' && Math.random() < 0.5) {
-    s.crew = s.def.crewMax; s.batt = s.def.batt; s.inv = 1;
+  if (!noRebirth && s.def.id === 'parrot' && Math.random() * 100 < s.p.rebirth) {
+    s.crew = s.p.crewMax; s.batt = s.p.batt; s.inv = 1;
     ringFX(s.x, s.y, '#fb4');
     placeShip(s, otherShip(s.side));
     ringFX(s.x, s.y, '#fb4');
@@ -447,50 +566,59 @@ function pushMsg(text, color, t){ msgs.push({text, color:color || '#fff', t:t ||
 // ================= ОБНОВЛЕНИЕ =================
 function updateShip(s, c, dt){
   if (!s.alive) return;
-  const d = s.def;
+  const d = s.def, p = s.p, ph = phys();
   s.inv = Math.max(0, s.inv - dt); s.cdF -= dt; s.cdS -= dt; s.hitCd -= dt;
   if (s.armed > 0) { s.armed -= dt; if (s.armed < 0) s.armed = 0; }
-  if (c.l) s.a -= d.turn * dt;
-  if (c.r) s.a += d.turn * dt;
+  if (c.l) s.a -= p.turn * DEG * dt;
+  if (c.r) s.a += p.turn * DEG * dt;
   s.thr = !!c.t;
   if (d.id === 'blink') {
-    if (c.t) { s.vx = Math.cos(s.a) * d.vmax; s.vy = Math.sin(s.a) * d.vmax; }
+    if (c.t) { s.vx = Math.cos(s.a) * p.vmax; s.vy = Math.sin(s.a) * p.vmax; }
     else { const k = Math.exp(-6 * dt); s.vx *= k; s.vy *= k; }
-  } else {
+  } else if (c.t) {
     const s0 = Math.hypot(s.vx, s.vy);
-    if (c.t) {
-      s.vx += Math.cos(s.a) * d.thrust * dt; s.vy += Math.sin(s.a) * d.thrust * dt;
-      const s1 = Math.hypot(s.vx, s.vy);
-      if (s1 > d.vmax && s1 > s0) { const k = Math.max(d.vmax, s0) / s1; s.vx *= k; s.vy *= k; }
-      if (Math.random() < dt * 40) particles.push({type:'spark', x:s.x - Math.cos(s.a) * d.r, y:s.y - Math.sin(s.a) * d.r, vx:-Math.cos(s.a) * 80 + rnd(-20, 20), vy:-Math.sin(s.a) * 80 + rnd(-20, 20), life:0.3, max:0.3, col:'#fa4', size:2});
-    }
+    s.vx += Math.cos(s.a) * p.thrust * dt; s.vy += Math.sin(s.a) * p.thrust * dt;
+    const s1 = Math.hypot(s.vx, s.vy);
+    if (s1 > p.vmax && s1 > s0) { const k = Math.max(p.vmax, s0) / s1; s.vx *= k; s.vy *= k; }
+    if (Math.random() < dt * 40) particles.push({type:'spark', x:s.x - Math.cos(s.a) * d.r, y:s.y - Math.sin(s.a) * d.r, vx:-Math.cos(s.a) * 80 + rnd(-20, 20), vy:-Math.sin(s.a) * 80 + rnd(-20, 20), life:0.3, max:0.3, col:'#fa4', size:2});
   }
+  let inWell = false;
   if (cfg.planet === 'on') {
     const pdx = wd(s.x, PX), pdy = wd(s.y, PY), pd = Math.hypot(pdx, pdy);
-    if (!d.noGrav && pd < GRANGE && pd > 1) { const g = Math.min(GMAX, GM / (pd * pd)); s.vx -= pdx / pd * g * dt; s.vy -= pdy / pd * g * dt; }
+    if (!d.noGrav && pd < ph.gRange && pd > 1 && ph.gravity > 0) {
+      inWell = true;
+      const vr = (pdx * s.vx + pdy * s.vy) / pd;                    // > 0 — удаляемся от планеты
+      const gk = ph.gravity / 100;
+      const g = Math.min(520 * gk, 9e6 * gk / (pd * pd)) * (vr > 0 ? ph.slingOut / 100 : 1);
+      s.vx -= pdx / pd * g * dt; s.vy -= pdy / pd * g * dt;
+    }
     if (pd < PR + d.r) {
       const nx = pdx / pd, ny = pdy / pd;
       s.x = wrapW(PX + nx * (PR + d.r + 0.5)); s.y = wrapW(PY + ny * (PR + d.r + 0.5));
       const vn = s.vx * nx + s.vy * ny;
       if (vn < 0) { s.vx -= 1.8 * vn * nx; s.vy -= 1.8 * vn * ny; }
-      if (s.hitCd <= 0) { s.hitCd = 0.5; damage(s, 1, null); sfx('dirt'); }
+      if (s.hitCd <= 0) { s.hitCd = 0.5; damage(s, ph.planetDmg, null); sfx('dirt'); }
     }
   }
-  if (d.id !== 'blink') { const sp = Math.hypot(s.vx, s.vy); if (sp > d.vmax) { const k = 1 - 0.35 * dt; s.vx *= k; s.vy *= k; } }
+  if (d.id !== 'blink') {
+    const sp = Math.hypot(s.vx, s.vy), cap = p.vmax * ph.overCap / 100;
+    if (sp > cap) { s.vx *= cap / sp; s.vy *= cap / sp; }
+    else if (sp > p.vmax && !inWell) { const k = Math.max(0, 1 - ph.decay / 100 * dt); s.vx *= k; s.vy *= k; }
+  }
   s.x = wrapW(s.x + s.vx * dt); s.y = wrapW(s.y + s.vy * dt);
   if (!s.alive) return;
   s.regenT += dt;
-  while (s.regenT >= d.regen) { s.regenT -= d.regen; if (!(d.id === 'wraith' && s.cloak)) s.batt = Math.min(d.batt, s.batt + 1); }
-  if (c.f && s.cdF <= 0 && doFire(s)) s.cdF = d.fireCd;
+  while (s.regenT >= p.regen) { s.regenT -= p.regen; if (!(d.id === 'wraith' && s.cloak)) s.batt = Math.min(p.batt, s.batt + 1); }
+  if (c.f && s.cdF <= 0 && doFire(s)) s.cdF = p.fCd;
   const edge = c.s && !s.prevS; s.prevS = !!c.s;
-  if (c.s && s.cdS <= 0 && (!d.edge || edge) && s.alive && doSpec(s)) s.cdS = d.specCd;
+  if (c.s && s.cdS <= 0 && (!d.edge || edge) && s.alive && doSpec(s)) s.cdS = p.sCd || 0;
 }
 function collideShips(){
   const a = sides[0] && sides[0].ship, b = sides[1] && sides[1].ship;
   if (!a || !b || !a.alive || !b.alive) return;
   const dx = wd(b.x, a.x), dy = wd(b.y, a.y), d = Math.hypot(dx, dy), R = a.def.r + b.def.r;
   if (d >= R || d < 0.01) return;
-  const nx = dx / d, ny = dy / d, ov = R - d, ma = a.def.mass, mb = b.def.mass;
+  const nx = dx / d, ny = dy / d, ov = R - d, ma = a.p.mass, mb = b.p.mass;
   a.x = wrapW(a.x - nx * ov * mb / (ma + mb)); a.y = wrapW(a.y - ny * ov * mb / (ma + mb));
   b.x = wrapW(b.x + nx * ov * ma / (ma + mb)); b.y = wrapW(b.y + ny * ov * ma / (ma + mb));
   const rv = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
@@ -506,7 +634,6 @@ function newAsteroid(){
   return {x:p.x, y:p.y, vx:rnd(-50, 50), vy:rnd(-50, 50), r:rnd(12, 22), rot:rnd(0, 6.28), vr:rnd(-1.5, 1.5), pts, alive:true, respawn:0};
 }
 function updateWorld(dt){
-  // снаряды
   for (let i = shots.length - 1; i >= 0; i--) {
     const sh = shots[i];
     sh.age += dt; sh.life -= dt;
@@ -540,7 +667,6 @@ function updateWorld(dt){
     if (!dead && cfg.planet === 'on' && Math.hypot(wd(sh.x, PX), wd(sh.y, PY)) < PR) { dead = true; sparks(sh.x, sh.y, 4, sh.col); }
     if (dead) shots.splice(i, 1);
   }
-  // истребители
   for (let i = fighters.length - 1; i >= 0; i--) {
     const f = fighters[i], mom = f.mother;
     if (!mom.alive) { fighters.splice(i, 1); continue; }
@@ -553,10 +679,9 @@ function updateWorld(dt){
     if (!back && d < 110) des += Math.PI / 2;
     f.a += clamp(angDiff(des, f.a), -5 * dt, 5 * dt);
     f.x = wrapW(f.x + Math.cos(f.a) * 300 * dt); f.y = wrapW(f.y + Math.sin(f.a) * 300 * dt);
-    if (!back && d < 150 && f.cd <= 0) { f.cd = 0.45; beam(f.x, f.y, e.x, e.y, '#f88'); damage(e, 1, f.side); }
-    if (back && d < mom.def.r + 6) { mom.crew = Math.min(mom.def.crewMax, mom.crew + 1); fighters.splice(i, 1); }
+    if (!back && d < 150 && f.cd <= 0) { f.cd = 0.45; beam(f.x, f.y, e.x, e.y, '#f88'); damage(e, f.dmg, f.side); }
+    if (back && d < mom.def.r + 6) { mom.crew = Math.min(mom.p.crewMax, mom.crew + 1); fighters.splice(i, 1); }
   }
-  // экипаж в космосе
   for (let i = pods.length - 1; i >= 0; i--) {
     const p = pods[i];
     p.life -= dt; p.vx *= 1 - 0.6 * dt; p.vy *= 1 - 0.6 * dt;
@@ -564,11 +689,10 @@ function updateWorld(dt){
     let got = false;
     for (const sd of sides) {
       const s = sd.ship;
-      if (s && s.alive && dist2(p, s) < s.def.r + 8) { if (s.crew < s.def.crewMax) s.crew++; got = true; sfx('shield'); break; }
+      if (s && s.alive && dist2(p, s) < s.def.r + 8) { if (s.crew < s.p.crewMax) s.crew++; got = true; sfx('shield'); break; }
     }
     if (got || p.life <= 0) pods.splice(i, 1);
   }
-  // астероиды
   for (let i = 0; i < asteroids.length; i++) {
     const a = asteroids[i];
     if (!a.alive) {
@@ -591,7 +715,6 @@ function updateWorld(dt){
       }
     }
   }
-  // частицы и прочее
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
@@ -628,7 +751,7 @@ function threatNear(s, R){
   return false;
 }
 function aiThink(s, e, dt){
-  const st = s.ai, P = AIP[cfg.diff] || AIP.normal, d = s.def, id = d.id;
+  const st = s.ai, P = AIP[cfg.diff] || AIP.normal, d = s.def, p = s.p, id = d.id;
   st.t -= dt; if (st.t > 0) return;
   st.t = P.think * rnd(0.7, 1.3);
   st.fire = false;
@@ -636,7 +759,8 @@ function aiThink(s, e, dt){
   if (eAlive && (!e.cloak || dist2(e, s) < 90)) { st.lx = e.x; st.ly = e.y; st.lvx = e.vx; st.lvy = e.vy; }
   const tx = eAlive ? st.lx : PX + 400, ty = eAlive ? st.ly : PY + 400;
   const dx = wd(tx, s.x), dy = wd(ty, s.y), dist = Math.hypot(dx, dy), angE = Math.atan2(dy, dx);
-  const tl = Math.min(1.5, dist / d.pspd);
+  const frange = id === 'blink' ? p.fRange : d.frange;
+  const tl = Math.min(1.5, dist / (p.fSpd || 9999));
   const aimA = Math.atan2(dy + (st.lvy - s.vy) * tl, dx + (st.lvx - s.vx) * tl);
   let desA = aimA, thrust = false;
   if (id === 'hare' && eAlive && dist < 460) { desA = angE + Math.PI; thrust = dist < 330; }
@@ -644,7 +768,7 @@ function aiThink(s, e, dt){
   else if (d.pref > 150 && dist < d.pref * 0.6) { desA = angE + Math.PI * 0.6; thrust = true; }
   if (id === 'siren' && pods.length) {
     let best = null, bd = 500;
-    for (const p of pods) { const pd = dist2(p, s); if (pd < bd) { bd = pd; best = p; } }
+    for (const q of pods) { const pd = dist2(q, s); if (pd < bd) { bd = pd; best = q; } }
     if (best) { desA = Math.atan2(wd(best.y, s.y), wd(best.x, s.x)); thrust = Math.abs(angDiff(desA, s.a)) < 0.8; }
   }
   if (cfg.planet === 'on') {
@@ -658,20 +782,20 @@ function aiThink(s, e, dt){
   st.desA = desA; st.thrust = thrust;
   if (!eAlive) return;
   const err = Math.abs(angDiff(aimA, s.a));
-  if (err < P.aim && dist < d.frange && Math.random() < P.fire) st.fire = true;
-  if (id === 'blink') st.fire = dist < 255 && Math.random() < P.fire;
+  if (err < P.aim && dist < frange && Math.random() < P.fire) st.fire = true;
+  if (id === 'blink') st.fire = dist < frange - 5 && Math.random() < P.fire;
   if (id === 'wraith') st.fire = st.fire && dist < 150;
   const ps = P.spec;
   let spec = false;
   switch (id) {
-    case 'bastion': spec = threatNear(s, 170) && Math.random() < ps; break;
-    case 'leviathan': spec = dist > 250 && dist < 800 && s.crew > 12 && s.batt >= 8 && Math.random() < 0.25 * ps; break;
+    case 'bastion': spec = threatNear(s, p.sRange) && Math.random() < ps; break;
+    case 'leviathan': spec = dist > 250 && dist < 800 && s.crew > p.fighters + 10 && s.batt >= p.sCost && Math.random() < 0.25 * ps; break;
     case 'hare': spec = Math.abs(angDiff(angE, s.a + Math.PI)) < 0.7 && dist < 520 && Math.random() < ps; break;
-    case 'wraith': spec = !s.cloak && dist > 380 && s.batt >= 6 && Math.random() < 0.5 * ps; break;
+    case 'wraith': spec = !s.cloak && dist > 380 && s.batt >= p.sCost * 2 && Math.random() < 0.5 * ps; break;
     case 'blink': spec = (threatNear(s, 110) || (s.crew <= 2 && dist < 200)) && Math.random() < ps * 0.7; break;
-    case 'sting': spec = dist < 130 && Math.random() < ps; break;
-    case 'siren': spec = dist < 340 && e.crew > 1 && s.batt >= 5 && Math.random() < 0.6 * ps; break;
-    case 'parrot': spec = s.batt < 3 && Math.random() < ps; break;
+    case 'sting': spec = dist < p.gloryR * 0.55 && Math.random() < ps; break;
+    case 'siren': spec = dist < p.sRange * 0.95 && e.crew > 1 && s.batt >= p.sCost && Math.random() < 0.6 * ps; break;
+    case 'parrot': spec = s.batt < p.fCost * 3 && Math.random() < ps; break;
   }
   if (spec) st.pulse = true;
 }
@@ -713,7 +837,7 @@ function startMatch(){
     color:i ? '#ff5a4a' : '#3fa9ff', fleet:pickFleet(n), used:[], ship:null, kills:0}));
   shots = []; fighters = []; pods = []; particles = []; beams = []; bubbles = []; msgs = [];
   asteroids = [];
-  if (cfg.asteroids === 'on') for (let k = 0; k < 6; k++) asteroids.push(newAsteroid());
+  for (let k = 0; k < Math.round(phys().asteroids); k++) asteroids.push(newAsteroid());
   for (const o of kb) for (const k in o) o[k] = false;
   for (const o of tin) for (const k in o) o[k] = false;
   time = 0; shake = 0;
@@ -782,28 +906,29 @@ function drawShipAt(c, d, color, r, thr){
   if (d.shape === 'disc') { c.strokeStyle = 'rgba(180,255,255,.7)'; c.beginPath(); c.ellipse(0, 0, r * 1.25, r * 0.8, 0, 0, 6.283); c.stroke(); }
   c.fillStyle = 'rgba(200,240,255,.9)'; c.beginPath(); c.arc(r * 0.45, 0, Math.max(1, r * 0.18), 0, 6.283); c.fill();
 }
+function statLine(d, p){ return `Экипаж ${p.crew}${p.crewMax > p.crew ? '/' + p.crewMax : ''} · Батарея ${p.batt} · Скорость ${p.vmax}`; }
 function showPicker(sd, avail){
   $('pickTitle').textContent = `${sd.label}: выберите корабль`;
   $('pickTitle').style.color = sd.color;
   const g = $('pickGrid'); g.textContent = '';
   const e = otherShip(sd.i);
+  if (e) {
+    const note = document.createElement('p'); note.style.gridColumn = '1 / -1';
+    note.textContent = `Противник: ${e.def.name} (экипаж ${e.crew}).`;
+    g.appendChild(note);
+  }
   for (const ti of avail) {
-    const d = SHIPS[ti];
+    const d = SHIPS[ti], p = effP(d);
     const b = document.createElement('button'); b.className = 'pcard';
     const cv = document.createElement('canvas'); cv.width = 180; cv.height = 110; cv.style.width = '90px'; cv.style.height = '55px';
     const c = cv.getContext('2d'); c.scale(2, 2); c.translate(45, 27); c.rotate(-0.3);
     drawShipAt(c, d, sd.color, 8 + d.r * 0.6, false);
-    const nm = document.createElement('b'); nm.textContent = d.name;
-    const st = document.createElement('i'); st.textContent = `Экипаж ${d.crew}${d.crewMax > d.crew ? '/' + d.crewMax : ''} · Батарея ${d.batt}`;
-    const rl = document.createElement('small'); rl.textContent = d.role;
-    b.append(cv, nm, st, rl);
+    const nm = document.createElement('b'); nm.innerHTML = `${d.name} <em>— ${d.role}</em>`;
+    const st = document.createElement('i'); st.textContent = statLine(d, p);
+    const info = document.createElement('div'); info.className = 'sinfo'; info.innerHTML = infoHTML(d, p);
+    b.append(cv, nm, st, info);
     b.addEventListener('click', () => { pickQueue.shift(); deploy(sd, ti); nextPick(); });
     g.appendChild(b);
-  }
-  if (e) {
-    const note = document.createElement('p'); note.style.gridColumn = '1 / -1';
-    note.textContent = `Противник: ${e.def.name} (экипаж ${e.crew}).`;
-    g.prepend(note);
   }
   $('pick').classList.add('show');
   $('touch').innerHTML = '';
@@ -826,6 +951,12 @@ function render(){
   const S = (x, y) => [W / 2 + wd(x, cam.x) * z, H / 2 + wd(y, cam.y) * z];
   if (cfg.planet === 'on') {
     const [px, py] = S(PX, PY), r = PR * z;
+    if (phys().gravity > 0) {
+      const gr = phys().gRange * 0.7 * z;
+      const wg = ctx.createRadialGradient(px, py, r, px, py, gr);
+      wg.addColorStop(0, 'rgba(90,140,255,.10)'); wg.addColorStop(1, 'rgba(90,140,255,0)');
+      ctx.fillStyle = wg; ctx.beginPath(); ctx.arc(px, py, gr, 0, 6.283); ctx.fill();
+    }
     const g = ctx.createRadialGradient(px - r * 0.35, py - r * 0.35, r * 0.1, px, py, r);
     g.addColorStop(0, '#9ad0ff'); g.addColorStop(0.6, '#3a6ab0'); g.addColorStop(1, '#10204a');
     ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, r, 0, 6.283); ctx.fill();
@@ -841,15 +972,15 @@ function render(){
     a.pts.forEach((m, i) => { const an = i / a.pts.length * 6.283, rr = a.r * m * z; i ? ctx.lineTo(Math.cos(an) * rr, Math.sin(an) * rr) : ctx.moveTo(Math.cos(an) * rr, Math.sin(an) * rr); });
     ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
   }
-  for (const p of pods) {
-    const [x, y] = S(p.x, p.y);
+  for (const q of pods) {
+    const [x, y] = S(q.x, q.y);
     ctx.fillStyle = '#8f8'; ctx.beginPath(); ctx.arc(x, y, Math.max(2, 5 * z), 0, 6.283); ctx.fill();
     ctx.fillStyle = '#fff'; ctx.fillRect(x - 1, y - 1, 2, 2);
   }
   for (const sh of shots) {
     const [x, y] = S(sh.x, sh.y);
     if (sh.kind === 'flame') {
-      const a = Math.max(0, sh.life / 0.38);
+      const a = Math.max(0, sh.life / sh.max);
       ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a;
       ctx.fillStyle = a > 0.5 ? '#ffd060' : '#ff6020';
       ctx.beginPath(); ctx.arc(x, y, Math.max(1.5, (sh.r + sh.age * 20) * z), 0, 6.283); ctx.fill();
@@ -890,23 +1021,23 @@ function render(){
     ctx.strokeStyle = b.col; ctx.lineWidth = 2; ctx.globalAlpha = Math.min(1, b.t * 12);
     ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.globalAlpha = 1;
   }
-  for (const p of particles) {
-    const [x, y] = S(p.x, p.y), a = Math.max(0, p.life / p.max);
-    if (p.type === 'spark' || p.type === 'debris') {
-      ctx.globalAlpha = Math.min(1, a * 1.5); ctx.fillStyle = p.col;
-      const sz = Math.max(1, p.size * Math.max(0.6, z)); ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
-    } else if (p.type === 'smoke') {
+  for (const q of particles) {
+    const [x, y] = S(q.x, q.y), a = Math.max(0, q.life / q.max);
+    if (q.type === 'spark' || q.type === 'debris') {
+      ctx.globalAlpha = Math.min(1, a * 1.5); ctx.fillStyle = q.col;
+      const sz = Math.max(1, q.size * Math.max(0.6, z)); ctx.fillRect(x - sz / 2, y - sz / 2, sz, sz);
+    } else if (q.type === 'smoke') {
       ctx.globalAlpha = a * 0.35; ctx.fillStyle = '#aaa';
-      ctx.beginPath(); ctx.arc(x, y, Math.max(0.5, p.r * z), 0, 6.283); ctx.fill();
-    } else if (p.type === 'flash') {
+      ctx.beginPath(); ctx.arc(x, y, Math.max(0.5, q.r * z), 0, 6.283); ctx.fill();
+    } else if (q.type === 'flash') {
       ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a;
-      const r = Math.max(1, p.r * z), g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      const r = Math.max(1, q.r * z), g = ctx.createRadialGradient(x, y, 0, x, y, r);
       g.addColorStop(0, 'rgba(255,255,220,1)'); g.addColorStop(0.5, 'rgba(255,180,60,.8)'); g.addColorStop(1, 'rgba(255,60,0,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill();
       ctx.globalCompositeOperation = 'source-over';
-    } else if (p.type === 'ring') {
-      ctx.globalAlpha = a; ctx.strokeStyle = p.col; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(x, y, Math.max(1, p.r * z), 0, 6.283); ctx.stroke();
+    } else if (q.type === 'ring') {
+      ctx.globalAlpha = a; ctx.strokeStyle = q.col; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, Math.max(1, q.r * z), 0, 6.283); ctx.stroke();
     }
   }
   ctx.globalAlpha = 1;
@@ -937,8 +1068,10 @@ function drawHUD(){
         ctx.fillStyle = '#ddd'; ctx.font = '10px "Courier New",monospace';
         ctx.fillText(`${label} ${Math.max(0, Math.ceil(v))}`, left ? bx + bw + 6 : bx - 6, y + 8);
       };
-      bar(38, s.alive ? s.crew : 0, s.def.crewMax, '#4f4', 'экипаж');
-      bar(50, s.batt, s.def.batt, '#fc3', 'батарея');
+      bar(38, s.alive ? s.crew : 0, s.p.crewMax, '#4f4', 'экипаж');
+      bar(50, s.batt, s.p.batt, '#fc3', 'батарея');
+      const spk = Math.hypot(s.vx, s.vy) / s.p.vmax;
+      if (spk > 1.05 && s.alive) { ctx.fillStyle = '#8cf'; ctx.font = 'bold 11px "Courier New",monospace'; ctx.fillText(`разгон ×${spk.toFixed(1)}`, x0, 86); }
     }
     const left2 = sd.fleet.filter(t => !sd.used.includes(t)).length;
     ctx.fillStyle = '#888'; ctx.font = '10px "Courier New",monospace';
@@ -970,7 +1103,7 @@ const KEYS = {
 };
 window.addEventListener('keydown', e => {
   const tg = e.target;
-  if (tg && (tg.tagName === 'SELECT' || tg.tagName === 'INPUT')) return;
+  if (tg && (tg.tagName === 'SELECT' || tg.tagName === 'INPUT' || tg.tagName === 'TEXTAREA')) return;
   if (e.code === 'Escape') {
     e.preventDefault();
     if (menuOpen && state !== 'menu') resume(); else if (state === 'fight' || state === 'inter' || state === 'pick') openMenu();
@@ -988,7 +1121,7 @@ window.addEventListener('keyup', e => {
   kb[p][m[1]] = false;
 });
 window.addEventListener('blur', () => { for (const o of kb) for (const k in o) o[k] = false; });
-document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('contextmenu', e => { if (!(e.target && e.target.tagName === 'TEXTAREA')) e.preventDefault(); });
 
 function bindHold(el, down, up){
   let on = false;
@@ -1035,33 +1168,153 @@ touchMode = !!(window.matchMedia && matchMedia('(pointer:coarse)').matches);
 window.addEventListener('touchstart', () => { if (!touchMode) { touchMode = true; if (state === 'fight' || state === 'inter') buildTouch(); } }, {passive:true});
 
 // ================= МЕНЮ =================
+function mk(tag, cls, text){ const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function helpText(){
-  const base = 'Каждый корабль: поворот, тяга, огонь, спец. Экипаж — жизнь, батарея — энергия для оружия. Край поля сквозной, у планеты гравитация (удар о неё стоит экипажа).<br>';
+  const base = 'Каждый корабль: поворот, тяга, огонь, спец. Экипаж — жизнь, батарея — энергия для оружия и спецспособности. Край поля сквозной.<br>' +
+    'Рогатка: пройдите мимо планеты по касательной с включённой тягой — вылетите быстрее обычного максимума (в HUD — «разгон ×…»).<br>';
   return base + (cfg.mode === 'ai'
     ? 'Клавиатура: A D или ← → — поворот, W или ↑ — тяга, F / пробел / Enter — огонь, G / S / ↓ — спец. Esc — меню.'
     : 'Синие: A D — поворот, W — тяга, F — огонь, G или S — спец.<br>Красные: ← → — поворот, ↑ — тяга, «.» / Enter / правый Ctrl — огонь, ↓ / «/» / правый Shift — спец. Esc — меню.');
 }
-function buildMenu(){
+function numField(label, value, mn, mx, st, changed, onSet){
+  const f = mk('div', 'fld' + (changed ? ' changed' : ''));
+  const inp = mk('input'); inp.type = 'number'; inp.min = mn; inp.max = mx; inp.step = st; inp.value = value;
+  inp.addEventListener('change', () => {
+    let v = parseFloat(inp.value);
+    if (!isFinite(v)) v = value;
+    v = clamp(v, mn, mx);
+    v = st >= 1 ? Math.round(v) : Math.round(v * 100) / 100;
+    inp.value = v; onSet(v);
+  });
+  f.append(mk('span', null, label), inp);
+  return f;
+}
+let selShip = SHIPS[0].id;
+function renderOpts(){
   const box = $('opts'); box.textContent = '';
   for (const o of OPTS) {
-    const row = document.createElement('div'); row.className = 'frow';
-    const lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.textContent = o.label;
-    const seg = document.createElement('div'); seg.className = 'seg';
-    const btns = [];
+    const row = mk('div', 'frow'), seg = mk('div', 'seg'), btns = [];
     const mark = () => btns.forEach(b => b.classList.toggle('on', b.dataset.v === cfg[o.k]));
     for (const [v, l] of o.opts) {
-      const b = document.createElement('button'); b.textContent = l; b.dataset.v = v;
+      const b = mk('button', null, l); b.dataset.v = v;
       b.addEventListener('click', () => { cfg[o.k] = v; saveCfg(); mark(); if (o.k === 'mode') $('help').innerHTML = helpText(); if (o.k === 'sound' && v === 'on') { audio(); sfx('gun'); } });
       btns.push(b); seg.appendChild(b);
     }
     mark();
-    row.append(lbl, seg); box.appendChild(row);
+    row.append(mk('div', 'lbl', o.label), seg); box.appendChild(row);
   }
-  $('help').innerHTML = helpText();
 }
+function renderPhys(){
+  const box = $('physBox'); box.textContent = '';
+  const grid = mk('div', 'fields');
+  for (const [k, l, mn, mx, st, desc] of PHYS_UI) {
+    const f = numField(l, cfg.phys[k], mn, mx, st, cfg.phys[k] !== DEFAULT_PHYS[k], v => { cfg.phys[k] = v; saveCfg(); renderPhys(); });
+    if (desc) { const dd = mk('div', 'fdesc', desc); f.appendChild(dd); }
+    grid.appendChild(f);
+  }
+  box.appendChild(grid);
+  const rb = mk('button', 'small', 'Сбросить физику');
+  rb.addEventListener('click', () => { cfg.phys = Object.assign({}, DEFAULT_PHYS); saveCfg(); renderPhys(); });
+  box.appendChild(rb);
+}
+function renderShipEditor(){
+  const sel = $('shipSel');
+  if (!sel.options.length) {
+    for (const d of SHIPS) { const o = mk('option', null, `${d.name} — ${d.role}`); o.value = d.id; sel.appendChild(o); }
+    sel.addEventListener('change', () => { selShip = sel.value; renderShipEditor(); });
+  }
+  sel.value = selShip;
+  const d = SHIPS.find(x => x.id === selShip), p = effP(d);
+  $('shipInfo').innerHTML = `<div style="color:#9ab;margin-bottom:4px">${statLine(d, p)}</div>` + infoHTML(d, p);
+  const box = $('shipBox'); box.textContent = '';
+  for (const k of shipKeys(d)) {
+    const r = RANGES[k];
+    box.appendChild(numField(LABELS[k], p[k], r[0], r[1], r[2], p[k] !== d.p[k], v => {
+      if (!cfg.ships[d.id]) cfg.ships[d.id] = Object.assign({}, d.p);
+      cfg.ships[d.id][k] = v; saveCfg(); renderShipEditor();
+    }));
+  }
+}
+function buildMenu(){ renderOpts(); renderPhys(); renderShipEditor(); $('help').innerHTML = helpText(); }
+$('shipReset').addEventListener('click', () => { delete cfg.ships[selShip]; saveCfg(); renderShipEditor(); });
+
+// ---- экспорт / импорт ----
+function cfgToIni(){
+  const L = ['; Звёздная схватка — настройки', '; Строки, начинающиеся с «;», — комментарии.', '', '[game]'];
+  for (const o of OPTS) L.push(`; ${o.label}: ${o.opts.map(x => x[0] + ' — ' + x[1]).join(', ')}`, `${o.k} = ${cfg[o.k]}`);
+  L.push('', '[physics]');
+  for (const [k, l, mn, mx] of PHYS_UI) L.push(`; ${l} (${mn}–${mx})`, `${k} = ${cfg.phys[k]}`);
+  for (const d of SHIPS) {
+    const p = effP(d);
+    L.push('', `; ===== ${d.name} — ${d.role} =====`, `[ship.${d.id}]`);
+    for (const k of shipKeys(d)) L.push(`; ${LABELS[k]} (${RANGES[k][0]}–${RANGES[k][1]})`, `${k} = ${p[k]}`);
+  }
+  return L.join('\n') + '\n';
+}
+function applyIni(text){
+  const next = JSON.parse(JSON.stringify(cfg));
+  let sec = null, n = 0;
+  for (let line of String(text).split(/\r?\n/)) {
+    line = line.replace(/^\uFEFF/, '').trim();
+    if (!line || line[0] === ';' || line[0] === '#') continue;
+    const m = line.match(/^\[(.+)\]$/);
+    if (m) { sec = m[1].trim().toLowerCase(); continue; }
+    const eq = line.indexOf('='); if (eq < 0 || !sec) continue;
+    const k = line.slice(0, eq).trim(), v = line.slice(eq + 1).trim(), x = parseFloat(v);
+    if (sec === 'game') {
+      const o = OPTS.find(o => o.k === k);
+      if (o && o.opts.some(q => q[0] === v)) { next[k] = v; n++; }
+    } else if (sec === 'physics') {
+      const f = PHYS_UI.find(f => f[0] === k);
+      if (f && isFinite(x)) { next.phys[k] = clamp(x, f[2], f[3]); n++; }
+    } else if (sec.startsWith('ship.')) {
+      const d = SHIPS.find(d => d.id === sec.slice(5));
+      if (d && d.p[k] !== undefined && isFinite(x)) {
+        if (!next.ships[d.id]) next.ships[d.id] = Object.assign({}, d.p);
+        next.ships[d.id][k] = clamp(x, RANGES[k][0], RANGES[k][1]); n++;
+      }
+    }
+  }
+  if (!n) { $('ioMsg').textContent = 'В тексте не нашлось настроек.'; return; }
+  cfg = next; saveCfg(); buildMenu();
+  $('ioMsg').textContent = `Загружено значений: ${n}.`;
+}
+function download(name, text){
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+$('expBtn').addEventListener('click', () => {
+  const t = cfgToIni(); $('cfgText').value = t;
+  try { download('star-melee-settings.ini', t); $('ioMsg').textContent = 'Файл сохранён. Если не скачался — скопируйте текст из поля.'; }
+  catch (_) { $('ioMsg').textContent = 'Скачать не получилось — скопируйте текст из поля.'; }
+});
+$('impBtn').addEventListener('click', () => $('impFile').click());
+$('impFile').addEventListener('change', () => {
+  const file = $('impFile').files && $('impFile').files[0]; if (!file) return;
+  const rd = new FileReader();
+  rd.onload = () => { $('cfgText').value = String(rd.result); applyIni(rd.result); };
+  rd.readAsText(file, 'utf-8'); $('impFile').value = '';
+});
+$('showBtn').addEventListener('click', () => { $('cfgText').value = cfgToIni(); $('ioMsg').textContent = 'Текущие настройки. Можно поправить и нажать «Применить текст».'; });
+$('applyBtn').addEventListener('click', () => applyIni($('cfgText').value));
+let resetArm = 0;
+$('resetAll').addEventListener('click', () => {
+  const b = $('resetAll');
+  if (Date.now() - resetArm < 3000) {
+    cfg = freshCfg(); saveCfg(); buildMenu(); resetArm = 0; b.textContent = 'Настройки сброшены';
+    setTimeout(() => { b.textContent = 'Сбросить все настройки'; }, 1500);
+  } else {
+    resetArm = Date.now(); b.textContent = 'Нажмите ещё раз для сброса';
+    setTimeout(() => { if (resetArm && Date.now() - resetArm >= 2900) { resetArm = 0; b.textContent = 'Сбросить все настройки'; } }, 3000);
+  }
+});
+
 function openMenu(){
   if (menuOpen) return;
   menuOpen = true;
+  buildMenu();
   $('resumeBtn').style.display = state !== 'menu' && state !== 'over' ? 'block' : 'none';
   $('menu').classList.add('show');
 }
@@ -1069,7 +1322,7 @@ function resume(){ menuOpen = false; $('menu').classList.remove('show'); for (co
 $('startBtn').addEventListener('click', e => { e.currentTarget.blur(); audio(); $('pick').classList.remove('show'); startMatch(); });
 $('resumeBtn').addEventListener('click', e => { e.currentTarget.blur(); resume(); });
 $('againBtn').addEventListener('click', e => { e.currentTarget.blur(); startMatch(); });
-$('toMenuBtn').addEventListener('click', e => { e.currentTarget.blur(); $('over').classList.remove('show'); state = 'menu'; menuOpen = true; $('resumeBtn').style.display = 'none'; $('menu').classList.add('show'); $('menuBtn').style.display = 'none'; });
+$('toMenuBtn').addEventListener('click', e => { e.currentTarget.blur(); $('over').classList.remove('show'); state = 'menu'; menuOpen = true; buildMenu(); $('resumeBtn').style.display = 'none'; $('menu').classList.add('show'); $('menuBtn').style.display = 'none'; });
 $('menuBtn').addEventListener('click', e => { e.currentTarget.blur(); if (state !== 'menu' && state !== 'over') openMenu(); });
 
 // ================= ЗАПУСК =================
