@@ -4,6 +4,12 @@
 боя, физики или ИИ (мажор — механики несовместимы, минор — новые механики и корабли,
 патч — исправления). Стенд дополнительно хранит хеш файла движка и коммит.
 
+## 2.3.1
+- Planner: symmetric decisions (both sides plan at the start of a tick on the same world; 2.3.0 let side 1 see
+  side 0's move of the current tick).
+- Planner: engagement shaping (`PLAN.distW`) toward the preferred distance and loss weight 1.3 → 1.1 (`PLAN.lossW`)
+  to break planner-vs-planner stalls. Rule AI unchanged.
+
 ## 2.3.0
 - Planner AI: every 0.3 s tries 10 manoeuvres on cloned worlds for 1.2 s and picks the best by crew exchange.
   Opt-in per side: `createWorld({ai:['planner', 'rule']})`; the rule AI stays the default.

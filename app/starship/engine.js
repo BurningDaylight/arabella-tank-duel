@@ -9,7 +9,7 @@
 
 // Версия движка. Поднимать при любом изменении логики боя, физики или ИИ:
 // мажор — механики несовместимы, минор — новые механики/корабли, патч — исправления. Журнал: CHANGELOG.md.
-const VERSION = '2.3.0';
+const VERSION = '2.3.1';
 
 const WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110, DT = 1 / 120, DEG = Math.PI / 180;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -595,7 +595,13 @@ function aiCtl(W, s, e, dt){
 // thrust for the first segment (fire timing and specials still come from the rule AI unless the macro presses spec),
 // then both ships fall back to the rule AI. The opponent is always modelled by the rule AI.
 // Deterministic: clones carry their own RNG state and never touch the real world.
-const PLAN = {seg:0.3, horizon:1.2};
+const PLAN = {seg:0.3, horizon:1.2, lossW:1.1, distW:0.004};
+// preferred fighting distance, same formula as the rule AI (weapon range from current params)
+function prefDist(s){
+  const d = s.def, p = s.p;
+  const frange = d.id === 'blink' ? p.fRange : (p.fSpd && p.fLife ? p.fSpd * p.fLife : d.frange);
+  return d.pref > 0 ? Math.min(d.pref, frange * 0.8) : 0;
+}
 const MACROS = [
   {id:'rule'}, {id:'rule+spec', spec:true},
   {turn:'aim', thrust:1}, {turn:'aim', thrust:0},
@@ -633,11 +639,13 @@ function macroCtl(W, s, e, m, k){
 function planScore(S, side, my0, en0){
   const me = S.ships[side], en = S.ships[1 - side];
   const myC = me && me.alive ? me.crew : 0, enC = en && en.alive ? en.crew : 0;
-  let sc = (en0 - enC) - 1.3 * (my0 - myC);
+  let sc = (en0 - enC) - PLAN.lossW * (my0 - myC);
   if (en && !en.alive) sc += 40;
   if (!me || !me.alive) sc -= 60;
   else {
     sc += 0.03 * me.batt;
+    // engagement shaping: stay near own preferred distance, otherwise two careful planners never meet
+    if (en && en.alive) sc -= PLAN.distW * Math.abs(dist2(me, en) - prefDist(me));
     if (S.planet && Math.hypot(wd(me.x, PX), wd(me.y, PY)) < PR + me.def.r + 80) sc -= 3;
   }
   return sc;
@@ -654,21 +662,28 @@ function simulate(W, side, m){
   }
   return planScore(S, side, my0, en0);
 }
-function plannerCtl(W, s, e){
-  if (!e) return aiCtl(W, s, e, DT);
+// choose a macro when due; runs for every planner side at the start of a tick, before anyone moves
+function planAhead(W, s, e){
   const pl = s.plan || (s.plan = {t:0, m:MACROS[0], k:0});
-  if (pl.t <= 0) {
-    let best = MACROS[0], bs = -Infinity;
-    for (const m of MACROS) { const sc = simulate(W, s.side, m); if (sc > bs + 1e-9) { bs = sc; best = m; } }
-    pl.m = best; pl.k = 0; pl.t = PLAN.seg;
-  }
-  pl.t -= DT;
-  return macroCtl(W, s, e, pl.m, pl.k++);
+  if (!e || pl.t > 0) return;
+  let best = MACROS[0], bs = -Infinity;
+  for (const m of MACROS) { const sc = simulate(W, s.side, m); if (sc > bs + 1e-9) { bs = sc; best = m; } }
+  pl.m = best; pl.k = 0; pl.t = PLAN.seg;
+}
+function plannerCtl(W, s, e){
+  if (!e || !s.plan) return aiCtl(W, s, e, DT);
+  s.plan.t -= DT;
+  return macroCtl(W, s, e, s.plan.m, s.plan.k++);
 }
 
 // ---------- шаг ----------
 // ctls: [c0, c1] — управление людей {l,r,t,f,s}; null (или отсутствие) — сторону ведёт ИИ
 function step(W, ctls){
+  // planners decide first, on the same untouched world, so neither side sees the other's move of this tick
+  if (W.ai) for (let side = 0; side < 2; side++) {
+    const s = W.ships[side];
+    if (W.ai[side] === 'planner' && s && s.alive && !(ctls && ctls[side])) planAhead(W, s, other(W, side));
+  }
   W.time += DT;
   for (let side = 0; side < 2; side++) {
     const s = W.ships[side]; if (!s || !s.alive) continue;
