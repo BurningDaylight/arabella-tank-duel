@@ -7,6 +7,10 @@
 })(typeof self !== 'undefined' ? self : this, function () {
 'use strict';
 
+// Версия движка. Поднимать при любом изменении логики боя, физики или ИИ:
+// мажор — механики несовместимы, минор — новые механики/корабли, патч — исправления. Журнал: CHANGELOG.md.
+const VERSION = '2.0.1';
+
 const WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110, DT = 1 / 120, DEG = Math.PI / 180;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const wd = (a, b) => { let d = a - b; d -= Math.round(d / WW) * WW; return d; };
@@ -130,7 +134,7 @@ const shipKeys = d => COMMON.filter(k => !(d.noThrust && k === 'thrust')).concat
 const fmt = (str, p) => str.replace(/\{(\w+)\}/g, (_, k) => p[k] !== undefined ? p[k] : '?');
 
 function parseIni(text){
-  const out = {game:{}, phys:{}, ships:{}, n:0};
+  const out = {meta:{}, game:{}, phys:{}, ships:{}, n:0};
   let sec = null;
   for (let line of String(text).split(/\r?\n/)) {
     line = line.replace(/^\uFEFF/, '').trim();
@@ -139,7 +143,8 @@ function parseIni(text){
     if (m) { sec = m[1].trim().toLowerCase(); continue; }
     const eq = line.indexOf('='); if (eq < 0 || !sec) continue;
     const k = line.slice(0, eq).trim(), v = line.slice(eq + 1).trim(), x = parseFloat(v);
-    if (sec === 'game') { out.game[k] = v; out.n++; }
+    if (sec === 'meta') out.meta[k] = v;
+    else if (sec === 'game') { out.game[k] = v; out.n++; }
     else if (sec === 'physics') {
       const f = PHYS_UI.find(q => q[0] === k);
       if (f && isFinite(x)) { out.phys[k] = clamp(x, f[2], f[3]); out.n++; }
@@ -557,7 +562,7 @@ function step(W, ctls){
   updateWorld(W, DT);
 }
 
-return {WW, PX, PY, PR, DT, DEG, clamp, wd, wrapW, angDiff, dist2, mulberry,
+return {VERSION, WW, PX, PY, PR, DT, DEG, clamp, wd, wrapW, angDiff, dist2, mulberry,
   LABELS, RANGES, COMMON, SHIPS, INSULTS, AIP, PHYS_UI, DEFAULT_PHYS,
   effP, shipKeys, fmt, parseIni, createWorld, spawn, placeShip, other, step};
 });

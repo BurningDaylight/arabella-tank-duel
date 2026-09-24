@@ -87,7 +87,7 @@ window.addEventListener('error', function (e) {
 
 <div id="menu" class="overlay show"><div class="panel">
   <h1>ЗВЁЗДНАЯ СХВАТКА</h1>
-  <p>дуэль кораблей по мотивам Star Control</p>
+  <p>дуэль кораблей по мотивам Star Control · <span id="ver" style="color:#8cf"></span></p>
   <details open><summary>Игра</summary><div id="opts"></div></details>
   <details><summary>Физика и гравитация</summary><div id="physBox"></div></details>
   <details><summary>Корабли</summary>
@@ -543,7 +543,7 @@ function renderShipEditor(){
 function buildMenu(){ renderOpts(); renderPhys(); renderShipEditor(); $('help').innerHTML = helpText(); }
 $('shipReset').addEventListener('click', () => { delete cfg.ships[selShip]; saveCfg(); renderShipEditor(); });
 function cfgToIni(){
-  const L = ['; Звёздная схватка — настройки', '; Строки, начинающиеся с «;», — комментарии.', '', '[game]'];
+  const L = ['; Звёздная схватка — настройки', '; Строки, начинающиеся с «;», — комментарии.', '', '[meta]', '; version — имя этого набора, например balance-v3; based_on — от какого набора; note — что меняли', 'version = ', 'based_on = ', 'note = ', `engine = ${E.VERSION}`, `exported = ${new Date().toISOString()}`, '', '[game]'];
   for (const o of OPTS) L.push(`; ${o.label}: ${o.opts.map(x => x[0] + ' — ' + x[1]).join(', ')}`, `${o.k} = ${cfg[o.k]}`);
   L.push('', '[physics]');
   for (const [k, l, mn, mx] of PHYS_UI) L.push(`; ${l} (${mn}–${mx})`, `${k} = ${cfg.phys[k]}`);
@@ -556,7 +556,7 @@ function applyIni(text){
   for (const o of OPTS) if (r.game[o.k] !== undefined && o.opts.some(q => q[0] === r.game[o.k])) cfg[o.k] = r.game[o.k];
   Object.assign(cfg.phys, r.phys);
   for (const id in r.ships) { const d = SHIPS.find(q => q.id === id); cfg.ships[id] = Object.assign({}, d.p, cfg.ships[id] || {}, r.ships[id]); }
-  saveCfg(); buildMenu(); $('ioMsg').textContent = `Загружено значений: ${r.n}.`;
+  saveCfg(); buildMenu(); $('ioMsg').textContent = `Загружено значений: ${r.n}.` + (r.meta && r.meta.engine ? ` Файл выгружен из движка v${r.meta.engine}${r.meta.engine !== E.VERSION ? ' (у вас v' + E.VERSION + ')' : ''}${r.meta.version ? ', набор «' + r.meta.version + '»' : ''}.` : '');
 }
 function download(name, text){ const blob = new Blob([text], {type:'text/plain;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); }
 $('expBtn').addEventListener('click', () => { const t = cfgToIni(); $('cfgText').value = t; try { download('star-melee-settings.ini', t); $('ioMsg').textContent = 'Файл сохранён. Если не скачался — скопируйте текст из поля.'; } catch (_) { $('ioMsg').textContent = 'Скачать не получилось — скопируйте текст из поля.'; } });
@@ -592,6 +592,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 try { buildMenu(); } catch (e) { showErr(e); }
+$('ver').textContent = 'движок v' + (E.VERSION || '?');
 try { loadSamples(); } catch (e) { showErr(e); }
 fit();
 requestAnimationFrame(frame);
