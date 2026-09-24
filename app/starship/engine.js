@@ -9,7 +9,7 @@
 
 // Версия движка. Поднимать при любом изменении логики боя, физики или ИИ:
 // мажор — механики несовместимы, минор — новые механики/корабли, патч — исправления. Журнал: CHANGELOG.md.
-const VERSION = '2.0.1';
+const VERSION = '2.0.2';
 
 const WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110, DT = 1 / 120, DEG = Math.PI / 180;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -501,13 +501,15 @@ function aiThink(W, s, e, dt){
   if (eAlive && (!e.cloak || dist2(e, s) < 90)) { st.lx = e.x; st.ly = e.y; st.lvx = e.vx; st.lvy = e.vy; }
   const tx = eAlive ? st.lx : PX + 400, ty = eAlive ? st.ly : PY + 400;
   const dx = wd(tx, s.x), dy = wd(ty, s.y), dist = Math.hypot(dx, dy), angE = Math.atan2(dy, dx);
-  const frange = id === 'blink' ? p.fRange : d.frange;
+  // дальность и любимая дистанция — из текущих параметров, иначе правки INI ломают поведение ИИ
+  const frange = id === 'blink' ? p.fRange : (p.fSpd && p.fLife ? p.fSpd * p.fLife : d.frange);
+  const pref = d.pref > 0 ? Math.min(d.pref, frange * 0.8) : 0;
   const tl = Math.min(1.5, dist / (p.fSpd || 9999));
   const aimA = Math.atan2(dy + (st.lvy - s.vy) * tl, dx + (st.lvx - s.vx) * tl);
   let desA = aimA, thrust = false;
   if (id === 'hare' && eAlive && dist < 460) { desA = angE + Math.PI; thrust = dist < 330; }
-  else if (dist > d.pref * 1.15 + 40) thrust = Math.abs(angDiff(desA, s.a)) < 0.7;
-  else if (d.pref > 150 && dist < d.pref * 0.6) { desA = angE + Math.PI * 0.6; thrust = true; }
+  else if (dist > pref * 1.15 + 40) thrust = Math.abs(angDiff(desA, s.a)) < 0.7;
+  else if (pref > 150 && dist < pref * 0.6) { desA = angE + Math.PI * 0.6; thrust = true; }
   if (id === 'siren' && W.pods.length) {
     let best = null, bd = 500;
     for (const q of W.pods) { const pd = dist2(q, s); if (pd < bd) { bd = pd; best = q; } }
@@ -526,7 +528,7 @@ function aiThink(W, s, e, dt){
   const err = Math.abs(angDiff(aimA, s.a));
   if (err < P.aim && dist < frange && W.rng() < P.fire) st.fire = true;
   if (id === 'blink') st.fire = dist < frange - 5 && W.rng() < P.fire;
-  if (id === 'wraith') st.fire = st.fire && dist < 150;
+  if (id === 'wraith') st.fire = st.fire && dist < frange;
   const ps = P.spec;
   let spec = false;
   switch (id) {
