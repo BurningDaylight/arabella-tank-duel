@@ -8,6 +8,6 @@
     "bench:full": "node tools/melee-bench/bench.mjs --n 1000",
     "bench:cmp": "node tools/melee-bench/compare.mjs",
     "bench:last": "node tools/melee-bench/compare.mjs prev latest",
-    "test": "node --test tools/"
+    "test": "node --test \"tools/**/*.test.mjs\""
   }
 }
