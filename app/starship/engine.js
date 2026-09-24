@@ -9,7 +9,7 @@
 
 // Версия движка. Поднимать при любом изменении логики боя, физики или ИИ:
 // мажор — механики несовместимы, минор — новые механики/корабли, патч — исправления. Журнал: CHANGELOG.md.
-const VERSION = '2.1.0';
+const VERSION = '2.2.0';
 
 const WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110, DT = 1 / 120, DEG = Math.PI / 180;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -40,13 +40,14 @@ const LABELS = {
   gloryDmg:'Взрыв: урон в центре', gloryR:'Взрыв: радиус', stealMin:'Песня: мин. экипажа', stealMax:'Песня: макс. экипажа',
   insultGain:'Оскорбление: + батареи', rebirth:'Шанс перерождения, %',
   magnetR:'Магнит экипажа: радиус', magnetF:'Магнит экипажа: сила',
+  cloakDrain:'Маскировка: расход батареи в секунду', ambushMul:'Засада: множитель урона', ambushT:'Засада: длительность, с',
 };
 const RANGES = {
   crew:[1,99,1], crewMax:[1,99,1], batt:[1,99,1], regen:[0.02,5,0.01], turn:[20,720,1], thrust:[0,2000,10], vmax:[50,1000,10], mass:[0.5,50,0.5],
   fCost:[0,50,1], fCd:[0.02,5,0.01], fDmg:[0,50,1], fSpd:[50,2000,10], fLife:[0.1,10,0.05], fRange:[50,1000,10], homing:[0,720,5],
   sCost:[0,50,1], sCd:[0,10,0.05], sRange:[50,1500,10], sDmg:[0,50,1], sSpd:[50,2000,10], sLife:[0.1,10,0.1],
   fighters:[1,8,1], fighterLife:[1,30,0.5], fighterDmg:[0,10,1], gloryDmg:[0,99,1], gloryR:[50,800,10],
-  stealMin:[0,20,1], stealMax:[0,20,1], insultGain:[0,20,1], rebirth:[0,100,5], magnetR:[0,1500,10], magnetF:[0,2000,10],
+  stealMin:[0,20,1], stealMax:[0,20,1], insultGain:[0,20,1], rebirth:[0,100,5], magnetR:[0,1500,10], magnetF:[0,2000,10], cloakDrain:[0,20,0.1], ambushMul:[1,10,0.1], ambushT:[0,5,0.1],
 };
 const COMMON = ['crew','crewMax','batt','regen','turn','thrust','vmax','mass'];
 
@@ -76,10 +77,10 @@ const SHIPS = [
    shape:'saucer', ditty:[72,69,65,62,60,55], wave:'triangle', captains:['Трусишка','Ах-ох','Бегунок','Пугало']},
   {id:'wraith', name:'Призрак', role:'засадник', r:16, pref:90, frange:150, edge:true,
    weapon:'Огнемёт вплотную: урон {fDmg} за струю, цена {fCost}. Дальность маленькая.',
-   special:'Маскировка (цена {sCost}): почти невидим, робот теряет цель, батарея не заряжается. Выстрел или повторное нажатие снимает маскировку.',
+   special:'Маскировка (цена {sCost}, расход {cloakDrain}/с): невидим и неуязвим для оружия, батарея не заряжается. Выстрел или повторное нажатие снимает маскировку; первые {ambushT} с после выхода из тени урон ×{ambushMul}.',
    p:{crew:22, crewMax:22, batt:16, regen:0.3, turn:150, thrust:280, vmax:240, mass:6,
-      fCost:1, fCd:0.07, fDmg:1, fSpd:360, fLife:0.38, sCost:3, sCd:0.4},
-   keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd'],
+      fCost:1, fCd:0.07, fDmg:1, fSpd:360, fLife:0.38, sCost:3, sCd:0.4, cloakDrain:1.5, ambushMul:2, ambushT:0.8},
+   keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd','cloakDrain','ambushMul','ambushT'],
    shape:[[1.2,0.15],[0.2,0.5],[-0.8,1.0],[-0.4,0.2],[-1,0],[-0.4,-0.2],[-0.8,-1.0],[0.2,-0.5],[1.2,-0.15]],
    ditty:[50,53,49,46,45], wave:'sawtooth', captains:['Тень','Шёпот','Кошмар','Мрак']},
   {id:'blink', name:'Блинк', role:'мерцающий', r:10, pref:200, noGrav:true, noThrust:true,
@@ -233,12 +234,12 @@ function doFire(W, s){
       emit(W, 'sfx', {name:'gun'}); return true;
     case 'wraith':
       if (!pay(s, p.fCost)) return false;
-      s.cloak = false;
-      shoot(W, s, {speed:p.fSpd, ang:rnd(W, -0.12, 0.12), dmg:p.fDmg, life:p.fLife, r:6, kind:'flame', col:'#ff8030', inherit:true});
+      if (s.cloak) { s.cloak = false; s.ambush = p.ambushT || 0; }   // leaving the shadow opens the ambush window
+      shoot(W, s, {speed:p.fSpd, ang:rnd(W, -0.12, 0.12), dmg:p.fDmg * (s.ambush > 0 ? (p.ambushMul || 1) : 1), life:p.fLife, r:6, kind:'flame', col:'#ff8030', inherit:true});
       emit(W, 'sfx', {name:'gun'}); return true;
     case 'blink': {
       const e = other(W, s.side); if (!e) return false;
-      const d = dist2(e, s); if (d > p.fRange || (e.cloak && d > 90)) return false;
+      const d = dist2(e, s); if (d > p.fRange || e.cloak) return false;   // cloaked ships are immune to weapons
       if (!pay(s, p.fCost)) return false;
       beam(W, s.x, s.y, e.x, e.y, '#8ff'); damage(W, e, p.fDmg, 'fire'); emit(W, 'sfx', {name:'laser'}); return true;
     }
@@ -287,7 +288,7 @@ function doSpec(W, s){
       shoot(W, s, {speed:200, acc:300, vmax:p.sSpd, ang:Math.PI, homing:p.homing * DEG, dmg:p.sDmg, life:p.sLife, r:4, kind:'missile', col:'#9f9', src:'spec'});
       emit(W, 'sfx', {name:'shot'}); return true;
     case 'wraith':
-      if (s.cloak) { s.cloak = false; return true; }
+      if (s.cloak) { s.cloak = false; s.ambush = p.ambushT || 0; return true; }
       if (!pay(s, p.sCost)) return false;
       s.cloak = true; emit(W, 'sfx', {name:'shield'}); return true;
     case 'blink': {
@@ -300,7 +301,7 @@ function doSpec(W, s){
       if (s.armed <= 0) { s.armed = 1.6; emit(W, 'sfx', {name:'beep'}); return true; }
       glory(W, s); return true;
     case 'siren': {
-      if (!e || e.crew <= 1 || dist2(e, s) > p.sRange || !pay(s, p.sCost)) return false;
+      if (!e || e.cloak || e.crew <= 1 || dist2(e, s) > p.sRange || !pay(s, p.sCost)) return false;
       const lo = Math.round(p.stealMin), hi = Math.max(lo, Math.round(p.stealMax));
       const steal = Math.min(e.crew - 1, irnd(W, lo, hi));
       e.crew -= steal; W.stats[s.side].steal += steal;
@@ -330,6 +331,7 @@ function glory(W, s){
 }
 function damage(W, s, dmg, src){
   if (!s || !s.alive || s.inv > 0 || dmg <= 0) return;
+  if (s.cloak && src !== 'planet') return;   // cloaked: immune to all weapons, the planet still hurts
   // bench accounting: credited to the opponent by source; planet hits are counted as taken by the victim
   const st = src === 'planet' ? W.stats[s.side] : W.stats[1 - s.side];
   if (src && st) st[src] = (st[src] || 0) + Math.min(dmg, s.crew);
@@ -359,7 +361,7 @@ function shipDie(W, s, noRebirth){
 function updateShip(W, s, c, dt){
   if (!s.alive) return;
   const d = s.def, p = s.p, ph = W.phys;
-  s.inv = Math.max(0, s.inv - dt); s.cdF -= dt; s.cdS -= dt; s.hitCd -= dt;
+  s.inv = Math.max(0, s.inv - dt); s.cdF -= dt; s.cdS -= dt; s.hitCd -= dt; s.ambush = Math.max(0, (s.ambush || 0) - dt);
   if (s.armed > 0) { s.armed -= dt; if (s.armed < 0) s.armed = 0; }
   if (c.l) s.a -= p.turn * DEG * dt;
   if (c.r) s.a += p.turn * DEG * dt;
@@ -399,6 +401,12 @@ function updateShip(W, s, c, dt){
   if (!s.alive) return;
   s.regenT += dt;
   while (s.regenT >= p.regen) { s.regenT -= p.regen; if (!(d.id === 'wraith' && s.cloak)) s.batt = Math.min(p.batt, s.batt + 1); }
+  // cloak drains battery; when it runs dry the ship drops out of the shadow
+  if (s.cloak && p.cloakDrain) {
+    s.drainT = (s.drainT || 0) + p.cloakDrain * dt;
+    while (s.drainT >= 1) { s.drainT -= 1; s.batt = Math.max(0, s.batt - 1); }
+    if (s.batt <= 0) { s.cloak = false; s.ambush = p.ambushT || 0; }
+  }
   if (c.f && s.cdF <= 0 && doFire(W, s)) s.cdF = p.fCd;
   const edge = c.s && !s.prevS; s.prevS = !!c.s;
   if (c.s && s.cdS <= 0 && (!d.edge || edge) && s.alive && doSpec(W, s)) s.cdS = p.sCd || 0;
@@ -433,7 +441,7 @@ function updateWorld(W, dt){
     sh.x = wrapW(sh.x + sh.vx * dt); sh.y = wrapW(sh.y + sh.vy * dt);
     let dead = sh.life <= 0;
     const e = other(W, sh.side);
-    if (!dead && e && dist2(sh, e) < e.def.r + sh.r) {
+    if (!dead && e && !e.cloak && dist2(sh, e) < e.def.r + sh.r) {   // shots pass through a cloaked ship
       damage(W, e, sh.dmg, sh.src); dead = true;
       if (sh.kind === 'nuke' || sh.kind === 'missile') { emit(W, 'boom', {x:sh.x, y:sh.y, R:26}); emit(W, 'sfx', {name:'boom'}); }
     }
@@ -549,6 +557,7 @@ function aiThink(W, s, e, dt){
   if (err < P.aim && dist < frange && W.rng() < P.fire) st.fire = true;
   if (id === 'blink') st.fire = dist < frange - 5 && W.rng() < P.fire;
   if (id === 'wraith') st.fire = st.fire && dist < frange;
+  if (eAlive && e.cloak) st.fire = false;   // no point shooting at a cloaked (immune) target
   const ps = P.spec;
   let spec = false;
   switch (id) {

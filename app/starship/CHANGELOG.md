@@ -4,6 +4,13 @@
 боя, физики или ИИ (мажор — механики несовместимы, минор — новые механики и корабли,
 патч — исправления). Стенд дополнительно хранит хеш файла движка и коммит.
 
+## 2.2.0
+- Wraith cloak rework: while cloaked the ship is immune to all weapons (shots pass through; Blink laser, Siren song,
+  fighters and Sting glory do nothing); the planet still hurts.
+- Cloak drains battery (`cloakDrain`, default 1.5/s); at zero battery the ship drops out of the shadow.
+- Ambush: for `ambushT` s (default 0.8) after leaving the shadow the flamer deals `ambushMul` x damage (default 2).
+- AI does not fire at a cloaked target.
+
 ## 2.1.0
 - Siren crew magnet: pods within `magnetR` (default 420) accelerate toward her at `magnetF` (default 260).
   Both are tunable ship params (game UI and INI).
