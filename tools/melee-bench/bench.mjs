@@ -157,18 +157,18 @@ function finish(a, ids, res, t0, meta){
   console.log(pad('', 11) + ids.map(j => pad(name(j).slice(0, 7), 8)).join(''));
   for (const i of ids) console.log(pad(name(i), 11) + ids.map(j => pad((cell(i, j).win * 100).toFixed(0) + '%', 8)).join(''));
   // per-ship summary over non-mirror opponents: timeouts, fight length, damage per match by source
-  const KINDS = ['fire', 'spec', 'fighter', 'planet', 'steal'];
+  const KINDS = ['fire', 'spec', 'fighter', 'planet', 'steal', 'pick'];
   const shipStat = i => {
-    const o = ids.filter(j => j !== i), s = {to:0, t:0, fire:0, spec:0, fighter:0, planet:0, steal:0};
+    const o = ids.filter(j => j !== i), s = {to:0, t:0, fire:0, spec:0, fighter:0, planet:0, steal:0, pick:0};
     for (const j of o) { const c = cell(i, j); s.to += c.timeout; s.t += c.t; for (const k of KINDS) s[k] += (c.dmg && c.dmg[k]) || 0; }
     for (const k in s) s[k] /= Math.max(1, o.length);
     return s;
   };
   console.log('\nРейтинг (ничья = пол-победы), таймауты, длина боя и урон за бой по источникам:');
-  console.log('     ' + pad('корабль', 11) + pad('рейтинг', 9) + pad('таймаут', 9) + pad('бой,с', 7) + pad('оружие', 8) + pad('спец', 7) + pad('истреб', 8) + pad('планета', 9) + 'украл');
+  console.log('     ' + pad('корабль', 11) + pad('рейтинг', 9) + pad('таймаут', 9) + pad('бой,с', 7) + pad('оружие', 8) + pad('спец', 7) + pad('истреб', 8) + pad('планета', 9) + pad('украл', 7) + 'подобрал');
   rank.forEach((i, k) => {
     const s = shipStat(i), f = v => v.toFixed(1);
-    console.log(`  ${pad(k + 1 + '.', 3)}${pad(name(i), 11)}${pad((score(i) * 100).toFixed(1) + '%', 9)}${pad((s.to * 100).toFixed(0) + '%' + (s.to > 0.2 ? ' ⚠' : ''), 9)}${pad(f(s.t), 7)}${pad(f(s.fire), 8)}${pad(f(s.spec), 7)}${pad(f(s.fighter), 8)}${pad(f(s.planet), 9)}${f(s.steal)}`);
+    console.log(`  ${pad(k + 1 + '.', 3)}${pad(name(i), 11)}${pad((score(i) * 100).toFixed(1) + '%', 9)}${pad((s.to * 100).toFixed(0) + '%' + (s.to > 0.2 ? ' ⚠' : ''), 9)}${pad(f(s.t), 7)}${pad(f(s.fire), 8)}${pad(f(s.spec), 7)}${pad(f(s.fighter), 8)}${pad(f(s.planet), 9)}${pad(f(s.steal), 7)}${f(s.pick)}`);
   });
   const stuck = rank.filter(i => shipStat(i).to > 0.2).map(name);
   if (stuck.length) console.log(`  ⚠ много таймаутов (>20%): ${stuck.join(', ')} — скорее всего, ИИ не может сблизиться или достать, а не баланс`);

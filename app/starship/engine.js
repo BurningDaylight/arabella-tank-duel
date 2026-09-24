@@ -9,7 +9,7 @@
 
 // Версия движка. Поднимать при любом изменении логики боя, физики или ИИ:
 // мажор — механики несовместимы, минор — новые механики/корабли, патч — исправления. Журнал: CHANGELOG.md.
-const VERSION = '2.0.3';
+const VERSION = '2.0.4';
 
 const WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110, DT = 1 / 120, DEG = Math.PI / 180;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -183,7 +183,7 @@ function createWorld(o){
     planet:o.planet !== false, diff:o.diff || ['normal', 'normal'], time:0, ships:[null, null],
     shots:[], fighters:[], pods:[], asteroids:[], beams:[], events:[],
     // per-side damage dealt by source; 'planet' is damage taken; 'steal' is crew stolen by song
-    stats:[{fire:0, spec:0, fighter:0, planet:0, steal:0}, {fire:0, spec:0, fighter:0, planet:0, steal:0}]};
+    stats:[{fire:0, spec:0, fighter:0, planet:0, steal:0, pick:0}, {fire:0, spec:0, fighter:0, planet:0, steal:0, pick:0}]};
   const na = o.asteroids !== undefined ? o.asteroids : W.phys.asteroids;
   for (let k = 0; k < Math.round(na); k++) W.asteroids.push(newAsteroid(W));
   return W;
@@ -305,7 +305,9 @@ function doSpec(W, s){
       e.crew -= steal; W.stats[s.side].steal += steal;
       for (let k = 0; k < steal; k++) {
         const a = rnd(W, 0, 6.283), sp = rnd(W, 60, 150);
-        W.pods.push({x:e.x, y:e.y, vx:Math.cos(a) * sp + e.vx * 0.4, vy:Math.sin(a) * sp + e.vy * 0.4, life:9});
+        // spawn just outside the victim's hull; the victim cannot re-collect its own crew for a moment
+        W.pods.push({x:wrapW(e.x + Math.cos(a) * (e.def.r + 10)), y:wrapW(e.y + Math.sin(a) * (e.def.r + 10)),
+          vx:Math.cos(a) * sp + e.vx * 0.4, vy:Math.sin(a) * sp + e.vy * 0.4, life:9, from:e.side, grace:1.2});
       }
       emit(W, 'ring', {x:s.x, y:s.y, col:'#f8f'}); emit(W, 'sfx', {name:'shield'}); return true;
     }
@@ -463,10 +465,10 @@ function updateWorld(W, dt){
   }
   for (let i = W.pods.length - 1; i >= 0; i--) {
     const q = W.pods[i];
-    q.life -= dt; q.vx *= 1 - 0.6 * dt; q.vy *= 1 - 0.6 * dt;
+    q.life -= dt; q.grace = (q.grace || 0) - dt; q.vx *= 1 - 0.6 * dt; q.vy *= 1 - 0.6 * dt;
     q.x = wrapW(q.x + q.vx * dt); q.y = wrapW(q.y + q.vy * dt);
     let got = false;
-    for (const s of W.ships) if (s && s.alive && dist2(q, s) < s.def.r + 8) { if (s.crew < s.p.crewMax) s.crew++; got = true; emit(W, 'sfx', {name:'shield'}); break; }
+    for (const s of W.ships) if (s && s.alive && dist2(q, s) < s.def.r + 8 && !(q.grace > 0 && s.side === q.from)) { if (s.crew < s.p.crewMax) { s.crew++; W.stats[s.side].pick++; } got = true; emit(W, 'sfx', {name:'shield'}); break; }
     if (got || q.life <= 0) W.pods.splice(i, 1);
   }
   for (let i = 0; i < W.asteroids.length; i++) {
