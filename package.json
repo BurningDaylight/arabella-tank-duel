@@ -3,11 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
+
     "bench": "node tools/melee-bench/bench.mjs",
     "bench:quick": "node tools/melee-bench/bench.mjs --n 200",
     "bench:full": "node tools/melee-bench/bench.mjs --n 1000",
     "bench:cmp": "node tools/melee-bench/compare.mjs",
     "bench:last": "node tools/melee-bench/compare.mjs prev latest",
+
     "test": "node --test \"tools/**/*.test.mjs\""
   }
 }
