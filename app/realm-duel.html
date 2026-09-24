@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Властители</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000;color:#e8e8f0;font-family:"Courier New",ui-monospace,monospace;overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none;overscroll-behavior:none}
+#err{position:fixed;left:0;right:0;bottom:0;z-index:100;background:#700;color:#fff;font-size:12px;padding:6px 10px;white-space:pre-wrap;display:none;max-height:40%;overflow:auto}
+#map{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#topbar{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;align-items:center;gap:10px;padding:6px 10px;padding-top:max(6px,env(safe-area-inset-top));
+  background:rgba(12,12,20,.9);border-bottom:2px solid #333;font-size:14px;white-space:nowrap}
+#fname{font-weight:bold;flex:1;overflow:hidden;text-overflow:ellipsis}
+#topbar button{height:30px;padding:0 10px;font-size:16px}
+#bottom{position:fixed;left:0;right:0;bottom:0;z-index:5;background:rgba(12,12,20,.93);border-top:2px solid #333;padding:6px 8px;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+#chips{display:flex;gap:6px;overflow-x:auto;touch-action:pan-x}
+.chip{flex:none;min-width:58px;padding:3px 6px;border-radius:8px;border:2px solid #666;background:#1c1c2c;color:#fff;text-align:center;font-size:11px;line-height:1.25}
+.chip .em{font-size:22px;display:block}
+.chip.off{opacity:.35}
+.chip.nomp{border-color:#744}
+#info{font-size:12px;color:#bbb;margin:4px 2px;min-height:15px;line-height:1.35}
+#btns{display:flex;gap:6px;flex-wrap:wrap}
+#btns button{height:40px;padding:0 10px;font-size:14px;flex:1;min-width:76px}
+#btns button.main{background:#6a4a10;border-color:#fc3}
+#btns button.go{background:#1a5a2a;border-color:#6d6}
+button{font-family:inherit;color:#fff;background:#262638;border:2px solid #556;border-radius:6px;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.35}
+#toast{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:7;display:flex;flex-direction:column;gap:4px;align-items:center;pointer-events:none;width:min(92vw,560px)}
+.tmsg{background:rgba(0,0,0,.85);border:1px solid #666;border-left-width:5px;padding:5px 10px;border-radius:6px;font-size:13px;text-align:center}
+.sheet{position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:8;width:min(100vw,560px);max-height:78vh;overflow:auto;background:#141428;
+  border:2px solid #667;border-bottom:none;border-radius:12px 12px 0 0;padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom));display:none;touch-action:pan-y}
+.sheet.show{display:block}
+.sheet h2{font-size:18px;margin-bottom:6px}
+.sheet p{font-size:13px;color:#bbb;line-height:1.4}
+.prod{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.prod button{text-align:left;padding:8px 10px;font-size:13px;line-height:1.35}
+.prod button.on{background:#1a4a8a;border-color:#6af}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;z-index:10;padding:12px}
+.overlay.show{display:flex}
+.overlay.opaque{background:#050508}
+.panel{background:#141428;border:2px solid #667;padding:16px 18px;max-width:600px;width:100%;text-align:center;max-height:100%;overflow:auto;touch-action:pan-y}
+.panel h1{font-size:26px;color:#fc6;letter-spacing:3px;text-shadow:0 0 12px #c80}
+.panel h2{font-size:20px;margin-bottom:8px}
+.panel p{font-size:13px;color:#bbb;margin:6px 0;line-height:1.45}
+.frow{margin:10px 0;text-align:left}
+.frow .lbl{font-size:13px;color:#ddd;margin-bottom:5px;font-weight:bold}
+.seg{display:flex;gap:6px}
+.seg button{flex:1;height:38px;font-size:13px}
+.seg button.on{background:#6a4a10;border-color:#fc3}
+.frow.fac{display:flex;align-items:center;gap:8px}
+.frow.fac .sw{width:14px;height:14px;flex:none;border:1px solid #fff}
+.frow.fac .nm{flex:1;font-size:13px}
+.frow.fac .nm small{display:block;color:#999;font-size:11px}
+.frow.fac button{height:36px;padding:0 10px;font-size:13px;flex:none}
+.big{width:100%;height:50px;margin-top:10px;background:#6a4a10;border-color:#fc3;font-weight:bold;font-size:18px}
+.big.alt{background:#262638;border-color:#556}
+.help{font-size:12px;color:#999;text-align:left;margin-top:10px;line-height:1.45}
+.mbtns{display:flex;gap:8px;margin-top:12px}
+.mbtns button{flex:1;height:44px;font-size:15px}
+.brow{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0 12px}
+.bu{display:inline-flex;flex-direction:column;align-items:center;font-size:22px;padding:4px 6px;border-radius:6px;background:#1c1c2c;border:2px solid #444;min-width:40px;transition:opacity .2s}
+.bu small{font-size:11px;color:#ddd}
+.bu.dead{opacity:.18;border-color:#822}
+.bu.act{border-color:#fc3}
+.bres{font-size:18px;font-weight:bold;margin:8px 0}
+</style>
+</head>
+<body>
+<div id="err"></div>
+<script>
+window.addEventListener('error', function (e) {
+  var d = document.getElementById('err'); if (!d) return;
+  d.style.display = 'block'; d.textContent += 'Ошибка: ' + e.message + ' (строка ' + e.lineno + ')\n';
+});
+</script>
+
+<canvas id="map"></canvas>
+<div id="topbar">
+  <span id="fname">Властители</span>
+  <span id="turnNo"></span>
+  <span id="gold"></span>
+  <button id="menuBtn">☰</button>
+</div>
+<div id="toast"></div>
+<div id="bottom"><div id="chips"></div><div id="info"></div><div id="btns"></div></div>
+<div id="city" class="sheet"></div>
+<div id="battle" class="overlay"><div class="panel" id="battleBody"></div></div>
+<div id="modal" class="overlay"><div class="panel"><div id="modalBody"></div><div class="mbtns" id="modalBtns"></div></div></div>
+
+<div id="menu" class="overlay show"><div class="panel">
+  <h1>ВЛАСТИТЕЛИ</h1>
+  <p>пошаговая стратегия по мотивам Warlords</p>
+  <button class="big" id="contBtn" style="display:none">Продолжить партию</button>
+  <button class="big alt" id="resumeBtn" style="display:none">Вернуться к игре</button>
+  <div id="opts"></div>
+  <div id="facs"></div>
+  <button class="big" id="newBtn">НОВАЯ ИГРА</button>
+  <div class="help">
+    <b>Цель:</b> захватить все города или уничтожить все армии соперников.<br>
+    <b>Управление:</b> тап по своему отряду — выбрать; тап по клетке — показать путь (зелёное — в этот ход, жёлтое — позже), второй тап — идти. Тап по своему городу — производство. Карта двигается пальцем/мышью, масштаб — щипком или колесом.<br>
+    <b>Клавиши:</b> Enter/пробел — идти, N — следующий отряд, E — конец хода, стрелки/WASD — прокрутка, +/− — масштаб, Esc — отмена/меню.<br>
+    <b>Бой:</b> бойцы сходятся по одному, слабые первыми; шанс удара — по соотношению сил. Герой даёт отряду +командование, укрепления города — бонус защитникам.<br>
+    <b>Герои</b> обыскивают руины (кнопка «Руины», когда герой стоит на них): золото, артефакты, союзники… или страж.
+  </div>
+</div></div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const irnd = (a, b) => Math.floor(rnd(a, b + 1));
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = irnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function showErr(e){ const d = $('err'); d.style.display = 'block'; d.textContent += 'Ошибка: ' + ((e && e.message) || e) + '\n'; }
+
+// ================= ДАННЫЕ =================
+const T = 32;
+const TER_NAME = ['Вода', 'Равнина', 'Лес', 'Холмы', 'Горы'];
+const COST = [Infinity, 2, 3, 3, 6];
+const UT = {
+  inf:  {name:'Пехота',          e:'🗡️', str:2, mp:10, cost:4,  turns:1, up:1},
+  arch: {name:'Лучники',         e:'🏹', str:2, mp:10, cost:5,  turns:1, up:1},
+  hvy:  {name:'Тяж. пехота',     e:'🛡️', str:4, mp:8,  cost:8,  turns:2, up:2},
+  cav:  {name:'Кавалерия',       e:'🐎', str:4, mp:16, cost:10, turns:2, up:2},
+  wolf: {name:'Волчьи всадники', e:'🐺', str:3, mp:14, cost:7,  turns:1, up:1},
+  giant:{name:'Великан',         e:'🗿', str:6, mp:8,  cost:14, turns:3, up:3},
+  peg:  {name:'Пегасы',          e:'🦄', str:3, mp:16, cost:12, turns:2, up:2, fly:true},
+  grif: {name:'Грифоны',         e:'🦅', str:5, mp:16, cost:18, turns:3, up:3, fly:true},
+  drag: {name:'Дракон',          e:'🐉', str:8, mp:18, cost:30, turns:4, up:5, fly:true},
+  hero: {name:'Герой',           e:'👑', str:5, mp:12, cost:0,  turns:0, up:0},
+};
+const FACTIONS = [
+  {name:'Гномы Каменного Кряжа', short:'Гномы',    color:'#e0923a', bonus:'hills',  pref:['inf','hvy','giant','grif'], desc:'+1 к силе в холмах и горах'},
+  {name:'Эльфы Зелёной Чащи',    short:'Эльфы',    color:'#3fcf5f', bonus:'forest', pref:['arch','inf','peg','cav'],   desc:'+1 к силе в лесу'},
+  {name:'Орды Кровавого Клыка',  short:'Орки',     color:'#e8483a', bonus:'attack', pref:['wolf','inf','hvy','giant'], desc:'+1 к силе в атаке'},
+  {name:'Всадники Степей',       short:'Всадники', color:'#4a98f0', bonus:'plain',  pref:['cav','inf','arch','wolf'],  desc:'+1 к силе на равнинах и дорогах'},
+];
+const ITEMS = [
+  {n:'Меч Молний', str:2}, {n:'Посох Гроз', str:3}, {n:'Щит Предков', str:1, cmd:1}, {n:'Знамя Храбрости', cmd:1},
+  {n:'Корона Власти', cmd:2}, {n:'Сапоги Скорости', mp:6}, {n:'Плащ Странника', mp:4, str:1}, {n:'Рог Героев', cmd:1, str:1},
+];
+const HERO_NAMES = ['Сэр Роланд','Торин','Лиэль','Гром','Альдарон','Кара','Бьорн','Эовин','Мирабель','Зуг','Талгат','Ильва','Ратибор','Сигрид','Олаф','Ниэна'];
+const AIDIFF = {easy:{aggr:0.8, income:0.9}, normal:{aggr:0.62, income:1}, hard:{aggr:0.5, income:1.25}};
+const SIZES = {small:{w:40, h:30, cities:18}, medium:{w:56, h:40, cities:28}, large:{w:72, h:52, cities:40}};
+const NA = ['Кар','Мор','Дел','Ар','Тал','Гри','Бел','Вер','Зал','Ил','Кром','Лис','Нор','Ост','Рав','Сол','Тор','Ум','Фал','Хар','Эл','Ярн','Бра','Гел','Дун','Мал'];
+const NB = ['ин','ар','ос','ел','ун','ир','ан','ор','ис','ав',''];
+const NC = ['град','мир','ход','дол','вал','бор','гор','хольм','стан','мост','тон','линг'];
+
+// ================= НАСТРОЙКИ =================
+const CFG_KEY = 'warlords_cfg_v1', SAVE_KEY = 'warlords_save_v1';
+const OPTS = [
+  {k:'size', label:'Размер карты', opts:[['small','Малая'],['medium','Средняя'],['large','Большая']]},
+  {k:'players', label:'Фракций', opts:[['2','2'],['3','3'],['4','4']]},
+  {k:'diff', label:'Сложность роботов', opts:[['easy','Легко'],['normal','Средне'],['hard','Сложно']]},
+  {k:'fog', label:'Туман войны', opts:[['on','Вкл'],['off','Выкл']]},
+  {k:'neutral', label:'Нейтральные гарнизоны', opts:[['weak','Слабые'],['normal','Обычные'],['strong','Сильные']]},
+  {k:'gold', label:'Стартовое золото', opts:[['30','30'],['60','60'],['120','120']]},
+];
+const DEFAULT_CFG = {size:'medium', players:'4', diff:'normal', fog:'on', neutral:'normal', gold:'60', humans:[true, false, false, false]};
+const store = (() => { try { const s = window.localStorage; s.setItem('__t','1'); s.removeItem('__t'); return s; } catch (_) { return null; } })();
+function loadCfg(){
+  const c = JSON.parse(JSON.stringify(DEFAULT_CFG));
+  let src = null;
+  try { if (store) src = JSON.parse(store.getItem(CFG_KEY) || 'null'); } catch (_) {}
+  if (src && typeof src === 'object') {
+    for (const o of OPTS) if (o.opts.some(x => x[0] === src[o.k])) c[o.k] = src[o.k];
+    if (Array.isArray(src.humans)) for (let i = 0; i < 4; i++) c.humans[i] = !!src.humans[i];
+  }
+  return c;
+}
+function saveCfg(){ try { if (store) store.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (_) {} }
+let cfg = loadCfg();
+
+// ================= СОСТОЯНИЕ =================
+let S = null, terrC = null, cityGrid = null, vis = [];
+let cam = {x:0, y:0, z:1};
+let sel = null, preview = null, mover = null, driver = null, driverAfter = null, modal = false, viewerIdx = -1;
+const canvas = $('map'), ctx = canvas.getContext('2d');
+let cw = 1, ch = 1, dpr = 1;
+
+const I = (x, y) => y * S.w + x;
+const inB = (x, y) => x >= 0 && y >= 0 && x < S.w && y < S.h;
+function cityAt(x, y){ if (!inB(x, y)) return null; const k = cityGrid[I(x, y)]; return k ? S.cities[k - 1] : null; }
+function stackById(id){ return S.stacks.find(s => s.id === id) || null; }
+function ruinAt(x, y){ return S.ruins.find(r => r.x === x && r.y === y) || null; }
+function removeStack(s){ const i = S.stacks.indexOf(s); if (i >= 0) S.stacks.splice(i, 1); }
+const itemSum = (u, k) => (u.items || []).reduce((a, i) => a + (ITEMS[i][k] || 0), 0);
+const heroStr = u => UT.hero.str + itemSum(u, 'str');
+const heroCmd = u => 1 + itemSum(u, 'cmd');
+const maxMp = u => u.type === 'hero' ? UT.hero.mp + itemSum(u, 'mp') : UT[u.type].mp;
+const baseStr = u => u.type === 'hero' ? heroStr(u) : UT[u.type].str;
+const cmdOf = units => Math.min(3, units.reduce((a, u) => a + (u.type === 'hero' ? heroCmd(u) : 0), 0));
+const stackMp = units => units.length ? Math.min(...units.map(u => u.mp)) : 0;
+const stackMax = units => units.length ? Math.min(...units.map(maxMp)) : 0;
+const canFly = units => units.length > 0 && units.every(u => UT[u.type].fly);
+const sideName = o => o < 0 ? 'Нейтралы' : S.factions[o].short;
+const colorOf = o => o < 0 ? '#aaa' : S.factions[o].color;
+function tileCost(x, y, fly){ if (!inB(x, y)) return Infinity; if (fly) return 2; const k = I(x, y); if (S.road[k]) return 1; return COST[S.terr[k]]; }
+function itemDesc(i){ const it = ITEMS[i], p = []; if (it.str) p.push(`+${it.str} сила`); if (it.cmd) p.push(`+${it.cmd} командование`); if (it.mp) p.push(`+${it.mp} ход`); return p.join(', '); }
+
+// ================= ГЕНЕРАЦИЯ =================
+function makeNoise(w, h, scale){
+  const gw = Math.ceil(w / scale) + 2, gh = Math.ceil(h / scale) + 2;
+  const g = Array.from({length:gw * gh}, () => Math.random());
+  return (x, y) => {
+    const fx = x / scale, fy = y / scale, x0 = Math.floor(fx), y0 = Math.floor(fy), tx = fx - x0, ty = fy - y0;
+    const sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
+    const v = (i, j) => g[(y0 + j) * gw + (x0 + i)];
+    return (v(0, 0) * (1 - sx) + v(1, 0) * sx) * (1 - sy) + (v(0, 1) * (1 - sx) + v(1, 1) * sx) * sy;
+  };
+}
+function astar(sx, sy, tx, ty, costFn, heurMin){
+  const W = S.w, H = S.h, N = W * H, start = sy * W + sx, goal = ty * W + tx;
+  if (start === goal) return [];
+  const g = new Float32Array(N).fill(Infinity), came = new Int32Array(N).fill(-1), closed = new Uint8Array(N);
+  const hf = [], hk = [];
+  const push = (f, k) => {
+    hf.push(f); hk.push(k); let i = hf.length - 1;
+    while (i > 0) { const p = (i - 1) >> 1; if (hf[p] <= hf[i]) break; let t = hf[p]; hf[p] = hf[i]; hf[i] = t; t = hk[p]; hk[p] = hk[i]; hk[i] = t; i = p; }
+  };
+  const pop = () => {
+    const k = hk[0], lf = hf.pop(), lk = hk.pop();
+    if (hf.length) {
+      hf[0] = lf; hk[0] = lk; let i = 0;
+      for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < hf.length && hf[l] < hf[m]) m = l; if (r < hf.length && hf[r] < hf[m]) m = r; if (m === i) break; let t = hf[m]; hf[m] = hf[i]; hf[i] = t; t = hk[m]; hk[m] = hk[i]; hk[i] = t; i = m; }
+    }
+    return k;
+  };
+  g[start] = 0; push(0, start);
+  while (hf.length) {
+    const k = pop(); if (closed[k]) continue; closed[k] = 1; if (k === goal) break;
+    const x = k % W, y = (k - x) / W;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue;
+      const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+      const nk = ny * W + nx; if (closed[nk]) continue;
+      const c = costFn(nk, nx, ny); if (c === Infinity) continue;
+      const ng = g[k] + c + (dx && dy ? 0.001 : 0);
+      if (ng < g[nk]) { g[nk] = ng; came[nk] = k; push(ng + Math.max(Math.abs(tx - nx), Math.abs(ty - ny)) * heurMin, nk); }
+    }
+  }
+  if (came[goal] < 0) return null;
+  const path = []; let k = goal;
+  while (k !== start) { path.push([k % S.w, (k - k % S.w) / S.w]); k = came[k]; }
+  return path.reverse();
+}
+function generate(sz, nf){
+  const w = sz.w, h = sz.h, N = w * h;
+  let terr, landCount = 0, tries = 0;
+  for (;;) {
+    const n1 = makeNoise(w, h, 12), n2 = makeNoise(w, h, 6), n3 = makeNoise(w, h, 3), mo = makeNoise(w, h, 7);
+    const hgt = new Float32Array(N);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const dx = (x / (w - 1) - 0.5) * 2, dy = (y / (h - 1) - 0.5) * 2;
+      const fall = Math.pow(Math.max(Math.abs(dx), Math.abs(dy)), 3) * 0.8 + (dx * dx + dy * dy) * 0.15;
+      hgt[y * w + x] = n1(x, y) * 0.55 + n2(x, y) * 0.3 + n3(x, y) * 0.15 - fall;
+    }
+    const sorted = Array.from(hgt).sort((a, b) => a - b);
+    const sea = sorted[Math.floor(N * 0.4)];
+    const landH = sorted.slice(Math.floor(N * 0.4));
+    const pH = landH[Math.floor(landH.length * 0.84)], pM = landH[Math.floor(landH.length * 0.95)];
+    terr = new Array(N).fill(0);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const k = y * w + x, v = hgt[k];
+      if (x === 0 || y === 0 || x === w - 1 || y === h - 1 || v < sea) terr[k] = 0;
+      else if (v > pM) terr[k] = 4;
+      else if (v > pH) terr[k] = 3;
+      else if (mo(x, y) > 0.6) terr[k] = 2;
+      else terr[k] = 1;
+    }
+    const comp = new Int32Array(N).fill(-1); let best = -1, bestSize = 0, cid = 0;
+    for (let k = 0; k < N; k++) {
+      if (!terr[k] || comp[k] >= 0) continue;
+      const st = [k]; comp[k] = cid; let size = 0;
+      while (st.length) {
+        const q = st.pop(); size++;
+        const x = q % w, y = (q - x) / w;
+        for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+          const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const nk = ny * w + nx; if (terr[nk] && comp[nk] < 0) { comp[nk] = cid; st.push(nk); }
+        }
+      }
+      if (size > bestSize) { bestSize = size; best = cid; }
+      cid++;
+    }
+    for (let k = 0; k < N; k++) if (terr[k] && comp[k] !== best) terr[k] = 0;
+    landCount = bestSize;
+    if (landCount > N * 0.35 || ++tries > 6) break;
+  }
+  S.terr = terr; S.road = new Array(N).fill(0);
+  // города
+  const cand = [];
+  for (let y = 2; y < h - 2; y++) for (let x = 2; x < w - 2; x++) { const t = terr[y * w + x]; if (t >= 1 && t <= 3) cand.push([x, y]); }
+  shuffle(cand);
+  let minD = Math.sqrt(landCount / sz.cities) * 0.9;
+  const cs = [];
+  for (let pass = 0; pass < 4 && cs.length < sz.cities; pass++) {
+    for (const [x, y] of cand) { if (cs.length >= sz.cities) break; if (cs.every(c => Math.hypot(c[0] - x, c[1] - y) >= minD)) cs.push([x, y]); }
+    minD *= 0.85;
+  }
+  const used = new Set();
+  const cityName = () => { for (let t = 0; t < 60; t++) { const n = pick(NA) + pick(NB) + pick(NC); if (!used.has(n)) { used.add(n); return n; } } return 'Город ' + (used.size + 1); };
+  const randTypes = () => {
+    const pool = ['inf','arch','hvy','cav','wolf','giant','peg','grif'];
+    const t = [pick(['inf','arch','wolf'])], n = irnd(2, 3);
+    while (t.length < n) { const c = pick(pool); if (!t.includes(c)) t.push(c); }
+    if (Math.random() < 0.08) t.push('drag');
+    return t;
+  };
+  S.cities = cs.map(([x, y], i) => {
+    terr[y * w + x] = 1;
+    const r = Math.random();
+    return {id:i, x, y, name:cityName(), owner:-1, income:irnd(8, 16), def:r < 0.3 ? 0 : r < 0.8 ? 1 : 2, types:randTypes(), prod:null, progress:0, capital:false};
+  });
+  cityGrid = new Int16Array(N); S.cities.forEach((c, i) => { cityGrid[c.y * w + c.x] = i + 1; });
+  // дороги
+  const m = S.cities.length, inT = [0], edges = [];
+  while (inT.length < m) {
+    let bd = Infinity, bi = -1, bj = -1;
+    for (const i of inT) for (let j = 0; j < m; j++) {
+      if (inT.includes(j)) continue;
+      const d = Math.hypot(S.cities[i].x - S.cities[j].x, S.cities[i].y - S.cities[j].y);
+      if (d < bd) { bd = d; bi = i; bj = j; }
+    }
+    inT.push(bj); edges.push([bi, bj]);
+  }
+  for (let i = 0; i < m; i++) {
+    if (Math.random() > 0.3) continue;
+    const ds = S.cities.map((c, j) => [Math.hypot(c.x - S.cities[i].x, c.y - S.cities[i].y), j]).sort((a, b) => a[0] - b[0]);
+    const j = ds[2] ? ds[2][1] : -1;
+    if (j >= 0 && !edges.some(e => (e[0] === i && e[1] === j) || (e[0] === j && e[1] === i))) edges.push([i, j]);
+  }
+  const RC = [25, 1.5, 3, 4, 10];
+  for (const [a, b] of edges) {
+    const A = S.cities[a], B = S.cities[b];
+    const p = astar(A.x, A.y, B.x, B.y, (k) => S.road[k] ? 0.6 : RC[terr[k]], 0.6);
+    if (p) { S.road[A.y * w + A.x] = 1; for (const [x, y] of p) S.road[y * w + x] = 1; }
+  }
+  // руины
+  S.ruins = [];
+  const nr = Math.round(sz.cities / 2.5);
+  for (const [x, y] of shuffle(cand.slice())) {
+    if (S.ruins.length >= nr) break;
+    const k = y * w + x;
+    if (!terr[k] || S.road[k] || cityGrid[k]) continue;
+    if (S.cities.some(c => Math.hypot(c.x - x, c.y - y) < 3)) continue;
+    if (S.ruins.some(r => Math.hypot(r.x - x, r.y - y) < 5)) continue;
+    S.ruins.push({x, y, done:false});
+  }
+  // столицы
+  const caps = [irnd(0, m - 1)];
+  while (caps.length < nf) {
+    let bd = -1, bi = -1;
+    for (let i = 0; i < m; i++) {
+      if (caps.includes(i)) continue;
+      const d = Math.min(...caps.map(c => Math.hypot(S.cities[c].x - S.cities[i].x, S.cities[c].y - S.cities[i].y)));
+      if (d > bd) { bd = d; bi = i; }
+    }
+    caps.push(bi);
+  }
+  caps.forEach((ci, fi) => {
+    const c = S.cities[ci];
+    Object.assign(c, {owner:fi, capital:true, income:20, def:2, types:FACTIONS[fi].pref.slice(0, 3)});
+    const pr = FACTIONS[fi].pref;
+    const units = [{type:'hero', mp:0, name:heroName(), items:[]}, {type:pr[0], mp:0}, {type:pr[0], mp:0}, {type:pr[1], mp:0}];
+    S.stacks.push({id:S.nextId++, owner:fi, x:c.x, y:c.y, units, path:[]});
+  });
+  const gn = {weak:[1, 1], normal:[1, 2], strong:[2, 3]}[cfg.neutral] || [1, 2];
+  for (const c of S.cities) {
+    if (c.owner >= 0) continue;
+    const cheap = c.types.filter(t => UT[t].cost <= 10); if (!cheap.length) cheap.push('inf');
+    const units = []; const n = irnd(gn[0], gn[1]);
+    for (let k = 0; k < n; k++) units.push({type:pick(cheap), mp:0});
+    S.stacks.push({id:S.nextId++, owner:-1, x:c.x, y:c.y, units, path:[]});
+  }
+}
+function heroName(){
+  const used = new Set();
+  if (S) for (const s of S.stacks) for (const u of s.units) if (u.type === 'hero') used.add(u.name);
+  const free = HERO_NAMES.filter(n => !used.has(n));
+  return free.length ? pick(free) : 'Герой ' + irnd(2, 99);
+}
+
+// ================= ОТРИСОВКА КАРТЫ =================
+function renderTerrain(){
+  const c = document.createElement('canvas'); c.width = S.w * T; c.height = S.h * T;
+  const x = c.getContext('2d');
+  for (let ty = 0; ty < S.h; ty++) for (let tx = 0; tx < S.w; tx++) {
+    const t = S.terr[I(tx, ty)], px = tx * T, py = ty * T;
+    if (t === 0) {
+      x.fillStyle = '#24548e'; x.fillRect(px, py, T, T);
+      x.strokeStyle = 'rgba(255,255,255,.16)'; x.lineWidth = 1.2;
+      for (let k = 0; k < 2; k++) { const wx = px + rnd(4, 24), wy = py + rnd(6, 26); x.beginPath(); x.arc(wx, wy, 4, Math.PI * 1.1, Math.PI * 1.9); x.stroke(); }
+      continue;
+    }
+    x.fillStyle = ['#000', '#6aa84f', '#5a9a45', '#8aa050', '#8a8a78'][t]; x.fillRect(px, py, T, T);
+    for (let k = 0; k < 6; k++) { x.fillStyle = Math.random() < 0.5 ? 'rgba(0,0,0,.08)' : 'rgba(255,255,255,.07)'; x.fillRect(px + rnd(0, 30), py + rnd(0, 30), 2, 2); }
+    if (t === 2) {
+      for (const [ox, oy] of [[8, 22], [20, 14], [24, 27], [10, 10]]) {
+        x.fillStyle = '#5a3a1a'; x.fillRect(px + ox - 1, py + oy, 2, 4);
+        x.fillStyle = '#2d6a2a'; x.beginPath(); x.moveTo(px + ox, py + oy - 9); x.lineTo(px + ox - 6, py + oy + 1); x.lineTo(px + ox + 6, py + oy + 1); x.closePath(); x.fill();
+      }
+    } else if (t === 3) {
+      for (const [ox, oy, r] of [[10, 22, 9], [22, 18, 8]]) {
+        x.fillStyle = '#a89858'; x.beginPath(); x.ellipse(px + ox, py + oy, r, r * 0.7, 0, Math.PI, 0); x.fill();
+        x.fillStyle = 'rgba(0,0,0,.15)'; x.beginPath(); x.ellipse(px + ox + 2, py + oy, r * 0.6, r * 0.5, 0, Math.PI * 1.5, 0); x.fill();
+      }
+    } else if (t === 4) {
+      x.fillStyle = '#a4a4a0'; x.beginPath(); x.moveTo(px + 16, py + 3); x.lineTo(px + 2, py + 29); x.lineTo(px + 30, py + 29); x.closePath(); x.fill();
+      x.fillStyle = '#6a6a66'; x.beginPath(); x.moveTo(px + 16, py + 3); x.lineTo(px + 30, py + 29); x.lineTo(px + 19, py + 29); x.closePath(); x.fill();
+      x.fillStyle = '#fff'; x.beginPath(); x.moveTo(px + 16, py + 3); x.lineTo(px + 11, py + 12); x.lineTo(px + 21, py + 12); x.closePath(); x.fill();
+    }
+    x.fillStyle = '#d8c890';
+    if (ty > 0 && !S.terr[I(tx, ty - 1)]) x.fillRect(px, py, T, 3);
+    if (ty < S.h - 1 && !S.terr[I(tx, ty + 1)]) x.fillRect(px, py + T - 3, T, 3);
+    if (tx > 0 && !S.terr[I(tx - 1, ty)]) x.fillRect(px, py, 3, T);
+    if (tx < S.w - 1 && !S.terr[I(tx + 1, ty)]) x.fillRect(px + T - 3, py, 3, T);
+  }
+  const isR = (a, b) => inB(a, b) && S.road[I(a, b)];
+  for (const pass of [0, 1]) {
+    x.strokeStyle = pass ? '#c8a262' : '#6a5030'; x.lineWidth = pass ? 5 : 8; x.lineCap = 'round';
+    for (let ty = 0; ty < S.h; ty++) for (let tx = 0; tx < S.w; tx++) {
+      if (!S.road[I(tx, ty)]) continue;
+      const cx = tx * T + 16, cy = ty * T + 16;
+      x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + 0.1, cy); x.stroke();
+      for (const [dx, dy] of [[1,0],[0,1],[1,1],[1,-1]]) {
+        if (!isR(tx + dx, ty + dy)) continue;
+        if (dx && dy && (isR(tx + dx, ty) || isR(tx, ty + dy))) continue;
+        x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + dx * T, cy + dy * T); x.stroke();
+      }
+    }
+  }
+  terrC = c;
+}
+function buildCityGrid(){ cityGrid = new Int16Array(S.w * S.h); S.cities.forEach((c, i) => { cityGrid[I(c.x, c.y)] = i + 1; }); }
+
+// ================= ТУМАН =================
+function sightOf(units){ let r = 2; for (const u of units) { if (UT[u.type].fly) r = Math.max(r, 4); if (u.type === 'hero') r = Math.max(r, 3); } return r; }
+function computeVis(fi){
+  if (fi < 0) return;
+  const f = S.factions[fi], v = new Uint8Array(S.w * S.h);
+  const mark = (cx, cy, r) => {
+    for (let y = cy - r; y <= cy + r; y++) for (let x = cx - r; x <= cx + r; x++)
+      if (inB(x, y) && (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r + 1) { const k = I(x, y); v[k] = 1; f.explored[k] = 1; }
+  };
+  for (const s of S.stacks) if (s.owner === fi) mark(s.x, s.y, sightOf(s.units));
+  for (const c of S.cities) if (c.owner === fi) mark(c.x, c.y, 2);
+  for (const c of S.cities) if (v[I(c.x, c.y)]) f.known[c.id] = c.owner;
+  vis[fi] = v;
+}
+function isVisible(fi, x, y){ if (S.fog !== 'on' || fi < 0) return true; const v = vis[fi]; return v ? !!v[I(x, y)] : false; }
+function isExplored(fi, x, y){ if (S.fog !== 'on' || fi < 0) return true; return !!S.factions[fi].explored[I(x, y)]; }
+function shownOwner(c){ if (S.fog !== 'on' || viewerIdx < 0 || isVisible(viewerIdx, c.x, c.y)) return c.owner; const k = S.factions[viewerIdx].known[c.id]; return k === undefined ? -1 : k; }
+
+// ================= ПУТИ =================
+function findPath(sx, sy, tx, ty, fi, fly){
+  const N = S.w * S.h, bl = new Uint8Array(N), goal = I(tx, ty);
+  for (const c of S.cities) if (c.owner !== fi) bl[I(c.x, c.y)] = 1;
+  for (const s of S.stacks) if (s.owner !== fi && (s.owner < 0 || isVisible(fi, s.x, s.y))) bl[I(s.x, s.y)] = 1;
+  bl[goal] = 0;
+  return astar(sx, sy, tx, ty, (k, x, y) => bl[k] ? Infinity : tileCost(x, y, fly), 1);
+}
+function pathPlan(path, units, fly){
+  let mp = stackMp(units), t = 0; const max = stackMax(units), turns = [];
+  for (const [x, y] of path) {
+    const c = tileCost(x, y, fly);
+    if (c > max) { turns.push(99); continue; }
+    if (mp < c) { t++; mp = max; }
+    mp -= c; turns.push(t);
+  }
+  return turns;
+}
+function hostileAt(x, y, fi, visibleOnly){
+  const c = cityAt(x, y); if (c && c.owner !== fi) return true;
+  return S.stacks.some(q => q.x === x && q.y === y && q.owner !== fi && (!visibleOnly || q.owner < 0 || isVisible(fi, x, y)));
+}
+
+// ================= ДВИЖЕНИЕ =================
+function startMove(s, path, done){ mover = {stack:s, path:path.slice(), t:0, done}; }
+function spend(units, c){ for (const u of units) u.mp = Math.max(0, u.mp - c); }
+function moveOneStep(){
+  const s = mover.stack;
+  if (!stackById(s.id) || !mover.path.length) return false;
+  const [nx, ny] = mover.path[0];
+  const fly = canFly(s.units), cost = tileCost(nx, ny, fly), mp = stackMp(s.units);
+  if (cost === Infinity) { s.path = []; return false; }
+  if (hostileAt(nx, ny, s.owner, false)) {
+    if (mover.path.length > 1) { s.path = []; if (S.factions[s.owner].human) toast('Путь преграждает противник'); return false; }
+    if (mp <= 0) return false;
+    spend(s.units, Math.min(mp, cost)); s.path = []; mover.path = [];
+    doBattle(s, nx, ny);
+    return false;
+  }
+  if (mp < cost) return false;
+  if (mover.path.length === 1) {
+    const o = S.stacks.find(q => q !== s && q.owner === s.owner && q.x === nx && q.y === ny);
+    if (o && o.units.length + s.units.length > 8) { s.path = []; if (S.factions[s.owner].human) toast('В одной клетке — не больше 8 бойцов'); return false; }
+  }
+  spend(s.units, cost); s.x = nx; s.y = ny; mover.path.shift(); s.path = mover.path.slice();
+  computeVis(s.owner);
+  return mover.path.length > 0;
+}
+function finishMove(){
+  const m = mover; mover = null;
+  let s = stackById(m.stack.id) ? m.stack : null;
+  if (s) {
+    const o = S.stacks.find(q => q !== s && q.owner === s.owner && q.x === s.x && q.y === s.y);
+    if (o && o.units.length + s.units.length <= 8) { o.units.push(...s.units); if (s.path.length) o.path = s.path; removeStack(s); s = o; }
+    computeVis(s.owner);
+  }
+  if (m.done) m.done(s);
+  if (S.factions[S.cur].human && !S.over) saveGame();
+  renderPanel(); updateTop();
+}
+function moverTick(dt){
+  const s = mover.stack, nxt = mover.path[0];
+  const show = viewerIdx < 0 || S.fog !== 'on' || isVisible(viewerIdx, s.x, s.y) || (nxt && isVisible(viewerIdx, nxt[0], nxt[1]));
+  const step = show ? 0.09 : 0;
+  mover.t += dt;
+  let guard = 0;
+  while (mover && mover.t >= step && guard++ < 500) {
+    mover.t -= step;
+    if (!moveOneStep()) { finishMove(); return; }
+    if (step > 0) return;
+  }
+}
+function splitStack(s, idxs){
+  const ns = {id:S.nextId++, owner:s.owner, x:s.x, y:s.y, units:idxs.map(i => s.units[i]), path:[]};
+  s.units = s.units.filter((_, i) => !idxs.includes(i));
+  S.stacks.push(ns);
+  return ns;
+}
+function placeUnit(owner, x, y, u){
+  const here = S.stacks.find(s => s.x === x && s.y === y && s.owner === owner);
+  if (here && here.units.length < 8) { here.units.push(u); return here; }
+  if (!here && !S.stacks.some(s => s.x === x && s.y === y)) { const s = {id:S.nextId++, owner, x, y, units:[u], path:[]}; S.stacks.push(s); return s; }
+  for (let r = 1; r <= 3; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+    if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+    const nx = x + dx, ny = y + dy; if (!inB(nx, ny)) continue;
+    const k = I(nx, ny); if (!S.terr[k] && !S.road[k] && !UT[u.type].fly) continue;
+    const c = cityAt(nx, ny); if (c && c.owner !== owner) continue;
+    const st = S.stacks.filter(q => q.x === nx && q.y === ny);
+    if (st.some(q => q.owner !== owner)) continue;
+    if (st.length && st[0].units.length < 8) { st[0].units.push(u); return st[0]; }
+    if (!st.length) { const s = {id:S.nextId++, owner, x:nx, y:ny, units:[u], path:[]}; S.stacks.push(s); return s; }
+  }
+  return null;
+}
+function spawnUnit(c, type, extra){
+  const u = type === 'hero' ? Object.assign({type:'hero', mp:0, items:[]}, extra) : {type, mp:0};
+  u.mp = maxMp(u);
+  return placeUnit(c.owner, c.x, c.y, u);
+}
+
+// ================= БОЙ =================
+function effStr(u, owner, terr, road, atk, cityDef, cmd){
+  let s = baseStr(u);
+  const b = owner >= 0 ? S.factions[owner].bonus : null;
+  if (b === 'hills' && (terr === 3 || terr === 4)) s++;
+  if (b === 'forest' && terr === 2) s++;
+  if (b === 'plain' && (terr === 1 || road)) s++;
+  if (b === 'attack' && atk) s++;
+  if (!atk && cityDef) { s += cityDef; if (u.type === 'arch') s++; }
+  return clamp(s + cmd, 1, 15);
+}
+function battleSetup(units, owner, tx, ty){
+  const k = I(tx, ty), terr = S.terr[k], road = !!S.road[k], city = cityAt(tx, ty);
+  const defStacks = S.stacks.filter(q => q.x === tx && q.y === ty && q.owner !== owner);
+  const defOwner = defStacks.length ? defStacks[0].owner : (city ? city.owner : -1);
+  const dUnits = defStacks.flatMap(q => q.units);
+  const cmdA = cmdOf(units), cmdD = cmdOf(dUnits), cdef = city ? city.def : 0;
+  const aList = units.map(u => ({u, s:effStr(u, owner, terr, road, true, 0, cmdA)})).sort((a, b) => a.s - b.s);
+  const dList = dUnits.map(u => ({u, s:effStr(u, defOwner, terr, road, false, cdef, cmdD)})).sort((a, b) => a.s - b.s);
+  return {aList, dList, city, defOwner};
+}
+function simulate(a, d, log){
+  let i = 0, j = 0, ha = 2, hd = 2;
+  while (i < a.length && j < d.length) {
+    if (Math.random() < a[i] / (a[i] + d[j])) { if (--hd <= 0) { if (log) log.push(['d', j]); j++; hd = 2; } }
+    else { if (--ha <= 0) { if (log) log.push(['a', i]); i++; ha = 2; } }
+  }
+  return i < a.length;
+}
+function winChance(units, owner, tx, ty, n){
+  if (!units.length) return 0;
+  const st = battleSetup(units, owner, tx, ty); if (!st.dList.length) return 1;
+  const a = st.aList.map(x => x.s), d = st.dList.map(x => x.s);
+  let w = 0; for (let k = 0; k < n; k++) if (simulate(a, d, null)) w++;
+  return w / n;
+}
+function doBattle(s, tx, ty){
+  const setup = battleSetup(s.units, s.owner, tx, ty);
+  if (!setup.dList.length) { occupy(s, tx, ty); return; }
+  const log = [], win = simulate(setup.aList.map(x => x.s), setup.dList.map(x => x.s), log);
+  const aDead = log.filter(e => e[0] === 'a').length, dDead = log.filter(e => e[0] === 'd').length;
+  const dSurv = new Set(win ? [] : setup.dList.slice(dDead).map(x => x.u));
+  for (const ds of S.stacks.filter(q => q.x === tx && q.y === ty && q.owner !== s.owner)) {
+    ds.units = ds.units.filter(u => dSurv.has(u));
+    if (!ds.units.length) removeStack(ds);
+  }
+  s.units = win ? setup.aList.slice(aDead).map(x => x.u) : [];
+  const where = setup.city ? setup.city.name : TER_NAME[S.terr[I(tx, ty)]].toLowerCase();
+  const defO = setup.defOwner, atkO = s.owner;
+  const human = (atkO >= 0 && S.factions[atkO].human) || (defO >= 0 && S.factions[defO].human);
+  if (win) occupy(s, tx, ty); else removeStack(s);
+  checkAlive();
+  const title = `${sideName(atkO)} атакуют — ${where}`;
+  if (human) showBattle(setup, log, win, title, atkO, defO);
+  else if (viewerIdx < 0 || isVisible(viewerIdx, tx, ty)) toast(`${title}: ${win ? 'победа атакующих' : 'атака отбита'}`, colorOf(atkO));
+}
+function occupy(s, tx, ty){
+  s.x = tx; s.y = ty; s.path = [];
+  const c = cityAt(tx, ty);
+  if (c && c.owner !== s.owner) {
+    const old = c.owner;
+    c.owner = s.owner; c.prod = null; c.progress = 0;
+    if (viewerIdx < 0 || isVisible(viewerIdx, tx, ty) || (old >= 0 && S.factions[old].human)) toast(`${sideName(s.owner)} захватывают ${c.name}!`, colorOf(s.owner));
+  }
+  computeVis(s.owner);
+  checkAlive();
+}
+function showBattle(setup, log, win, title, aO, dO){
+  modal = true;
+  const body = $('battleBody');
+  body.innerHTML = `<h2>${title}</h2>`;
+  const row = (list, o, label) => {
+    const h = document.createElement('div');
+    h.innerHTML = `<div style="color:${colorOf(o)};font-weight:bold">${label}</div>`;
+    const r = document.createElement('div'); r.className = 'brow';
+    const spans = list.map(x => { const sp = document.createElement('span'); sp.className = 'bu'; sp.innerHTML = `${x.u.type === 'hero' ? '👑' : UT[x.u.type].e}<small>${x.s}</small>`; r.appendChild(sp); return sp; });
+    h.appendChild(r); body.appendChild(h);
+    return spans;
+  };
+  const aS = row(setup.aList, aO, `Атакуют: ${sideName(aO)}`);
+  const dS = row(setup.dList, dO, `Защищаются: ${sideName(dO)}${setup.city ? ` (${setup.city.name}, укрепления +${setup.city.def})` : ''}`);
+  const res = document.createElement('div'); res.className = 'bres'; body.appendChild(res);
+  const btn = document.createElement('button'); btn.className = 'big alt'; btn.textContent = 'Пропустить'; body.appendChild(btn);
+  let k = 0, ai = 0, di = 0, done = false;
+  const mark = () => { aS.forEach((x, i) => x.classList.toggle('act', i === ai && !done)); dS.forEach((x, i) => x.classList.toggle('act', i === di && !done)); };
+  const finish = () => {
+    if (done) return; done = true; clearInterval(tm);
+    for (; k < log.length; k++) { const [sd, i] = log[k]; (sd === 'a' ? aS : dS)[i].classList.add('dead'); }
+    mark();
+    res.textContent = win ? 'Победа атакующих!' : 'Атака отбита!';
+    res.style.color = colorOf(win ? aO : dO);
+    btn.textContent = 'OK'; btn.className = 'big';
+  };
+  mark();
+  const tm = setInterval(() => {
+    if (k >= log.length) { finish(); return; }
+    const [sd, i] = log[k++];
+    (sd === 'a' ? aS : dS)[i].classList.add('dead');
+    if (sd === 'a') ai = i + 1; else di = i + 1;
+    mark();
+  }, 380);
+  btn.onclick = () => { if (!done) { finish(); return; } $('battle').classList.remove('show'); modal = false; renderPanel(); };
+  $('battle').classList.add('show');
+}
+
+// ================= ХОДЫ, ЭКОНОМИКА =================
+function incomeOf(fi){
+  let s = 0; for (const c of S.cities) if (c.owner === fi) s += c.income;
+  if (!S.factions[fi].human) s = Math.round(s * (AIDIFF[S.diff] || AIDIFF.normal).income);
+  return s;
+}
+function upkeepOf(fi){ let s = 0; for (const st of S.stacks) if (st.owner === fi) for (const u of st.units) s += UT[u.type].up; return s; }
+function economy(fi){
+  const f = S.factions[fi];
+  f.gold += incomeOf(fi) - upkeepOf(fi);
+  while (f.gold < 0) {
+    let bs = null, bi = -1;
+    for (const st of S.stacks) if (st.owner === fi) st.units.forEach((u, i) => { if (u.type !== 'hero' && (!bs || UT[u.type].cost < UT[bs.units[bi].type].cost)) { bs = st; bi = i; } });
+    if (!bs) { f.gold = 0; break; }
+    f.gold += UT[bs.units[bi].type].up; bs.units.splice(bi, 1); if (!bs.units.length) removeStack(bs);
+    if (f.human) toast('Казна пуста — один отряд распущен', f.color);
+  }
+  for (const c of S.cities) {
+    if (c.owner !== fi || !c.prod) continue;
+    const u = UT[c.prod];
+    c.progress++;
+    if (c.progress >= u.turns) {
+      if (f.gold >= u.cost) { f.gold -= u.cost; if (spawnUnit(c, c.prod)) { if (f.human) toast(`${c.name}: готово — ${u.name}`, f.color); } c.progress = 0; }
+      else { c.progress = u.turns; if (f.human) toast(`${c.name}: не хватает золота на «${u.name}»`, f.color); }
+    }
+  }
+  for (const st of S.stacks) if (st.owner === fi) for (const u of st.units) u.mp = maxMp(u);
+  computeVis(fi);
+}
+function heroOffer(fi, cb){
+  const f = S.factions[fi];
+  const heroes = S.stacks.filter(s => s.owner === fi).reduce((a, s) => a + s.units.filter(u => u.type === 'hero').length, 0);
+  const home = S.cities.find(c => c.owner === fi && c.capital) || S.cities.find(c => c.owner === fi);
+  if (!home || heroes >= 4 || S.turn < 2 || Math.random() > 0.12) { if (cb) cb(); return; }
+  const price = irnd(40, 110) + heroes * 25, name = heroName();
+  const hire = () => { f.gold -= price; spawnUnit(home, 'hero', {name}); computeVis(fi); if (f.human) toast(`${name} прибывает в ${home.name}`, f.color); updateTop(); renderPanel(); };
+  if (!f.human) { if (f.gold >= price + 20) hire(); if (cb) cb(); return; }
+  showModal(`<h2>Герой ищет службы</h2><p><b>${name}</b> готов служить вам за <b>${price}</b> золота.<br>В казне: ${f.gold}.</p>`,
+    [{t:'Нанять', dis:f.gold < price, fn:() => { hire(); if (cb) cb(); }}, {t:'Отказать', fn:() => { if (cb) cb(); }}]);
+}
+function beginTurn(){
+  if (S.over) return;
+  const fi = S.cur, f = S.factions[fi];
+  sel = null; preview = null;
+  if (!f.alive) { nextFaction(); return; }
+  economy(fi);
+  if (f.human) {
+    const humans = S.factions.filter(x => x.human && x.alive).length;
+    const go = () => {
+      viewerIdx = fi; computeVis(fi);
+      const cap = S.cities.find(c => c.owner === fi && c.capital) || S.cities.find(c => c.owner === fi) || S.stacks.find(s => s.owner === fi);
+      if (cap && S.turn === 1) centerOn(cap.x, cap.y);
+      saveGame(); updateTop(); renderPanel();
+      heroOffer(fi, () => runDriver(continuePaths(fi), () => { renderPanel(); }));
+    };
+    if (humans > 1 && S.fog === 'on') handoff(f, go); else go();
+  } else {
+    heroOffer(fi, null);
+    runDriver(aiTurn(fi), () => nextFaction());
+  }
+  updateTop(); renderPanel();
+}
+function nextFaction(){
+  if (S.over) return;
+  let i = S.cur;
+  for (let k = 0; k < S.factions.length; k++) { i = (i + 1) % S.factions.length; if (i === 0) S.turn++; if (S.factions[i].alive) break; }
+  S.cur = i;
+  beginTurn();
+}
+function* continuePaths(fi){
+  const ids = S.stacks.filter(s => s.owner === fi && s.path && s.path.length).map(s => s.id);
+  for (const id of ids) { const s = stackById(id); if (!s || !s.path.length) continue; startMove(s, s.path.slice(), null); yield; }
+}
+function runDriver(gen, after){ driver = gen; driverAfter = after; }
+function checkAlive(){
+  if (!S || S.over) return;
+  for (const f of S.factions) {
+    const has = S.cities.some(c => c.owner === f.id) || S.stacks.some(s => s.owner === f.id);
+    if (f.alive && !has) { f.alive = false; toast(`${f.name} повержены!`, f.color); }
+  }
+  const alive = S.factions.filter(f => f.alive);
+  const anyHuman = S.factions.some(f => f.human), humanAlive = alive.some(f => f.human);
+  if (alive.length <= 1) gameOver(alive[0] || null);
+  else if (anyHuman && !humanAlive) gameOver(null, true);
+}
+function gameOver(winner, lost){
+  if (S.over) return;
+  S.over = true; driver = null; mover = null;
+  try { if (store) store.removeItem(SAVE_KEY); } catch (_) {}
+  const title = lost ? 'Ваши армии разбиты…' : winner ? `${winner.name} — властители Иллурии!` : 'Все пали…';
+  showModal(`<h2 style="color:${winner ? winner.color : '#fff'}">${title}</h2><p>Ход ${S.turn}.</p>`, [{t:'В меню', fn:() => openMenu()}]);
+}
+function handoff(f, go){
+  $('modal').classList.add('opaque');
+  showModal(`<h2 style="color:${f.color}">Ход: ${f.name}</h2><p>Передайте устройство. Остальные — не подглядывайте!</p>`, [{t:'Я готов', fn:() => { $('modal').classList.remove('opaque'); go(); }}]);
+}
+
+// ================= РУИНЫ =================
+function exploreRuin(s, r, human){
+  const hero = s.units.find(u => u.type === 'hero'); if (!hero || r.done) return;
+  r.done = true; hero.mp = 0;
+  const f = S.factions[s.owner];
+  const reward = () => {
+    const q = Math.random();
+    if (q < 0.35) { const g = irnd(40, 160); f.gold += g; return `Найдено ${g} золота!`; }
+    if (q < 0.7) { const it = irnd(0, ITEMS.length - 1); hero.items.push(it); return `Найден артефакт: «${ITEMS[it].n}» (${itemDesc(it)}).`; }
+    if (q < 0.88) {
+      const t = Math.random() < 0.15 ? 'drag' : pick(['peg', 'grif', 'giant']), n = t === 'drag' ? 1 : irnd(1, 2);
+      let placed = 0; for (let k = 0; k < n; k++) if (s.units.length < 8) { s.units.push({type:t, mp:0}); placed++; }
+      return placed ? `К отряду присоединились: ${UT[t].e} ${UT[t].name} ×${placed}!` : 'Союзники хотели присоединиться, но в отряде нет места.';
+    }
+    return 'Руины пусты…';
+  };
+  let text;
+  if (Math.random() < 0.25) {
+    const g = irnd(4, 8);
+    if (simulate([heroStr(hero)], [g], null)) text = `👹 ${hero.name} сразил стража руин (сила ${g})! ` + reward();
+    else { s.units.splice(s.units.indexOf(hero), 1); if (!s.units.length) removeStack(s); text = `👹 ${hero.name} пал в бою со стражем руин (сила ${g})…`; }
+  } else text = `${hero.name} обыскивает руины. ` + reward();
+  computeVis(s.owner);
+  if (human) showModal(`<h2>Руины</h2><p>${text}</p>`, [{t:'OK'}]);
+  else if (viewerIdx < 0 || isVisible(viewerIdx, r.x, r.y)) toast(`${sideName(s.owner)}: ${text}`, f.color);
+  checkAlive(); updateTop(); renderPanel();
+}
+
+// ================= ИИ =================
+function threatNear(c, fi, R){
+  let s = 0;
+  for (const q of S.stacks) if (q.owner >= 0 && q.owner !== fi && Math.max(Math.abs(q.x - c.x), Math.abs(q.y - c.y)) <= R && isVisible(fi, q.x, q.y))
+    s += q.units.reduce((a, u) => a + baseStr(u), 0);
+  return s;
+}
+function aiProduction(fi){
+  const f = S.factions[fi], net = incomeOf(fi) - upkeepOf(fi);
+  for (const c of S.cities) {
+    if (c.owner !== fi) continue;
+    if (net < 2 && !c.capital) { c.prod = null; continue; }
+    if (c.prod && Math.random() < 0.8) continue;
+    let best = null, bs = -1;
+    for (const t of c.types) {
+      const u = UT[t];
+      if (u.cost > f.gold + Math.max(0, net) * u.turns + 10) continue;
+      const v = (u.str * u.str) / (u.cost + u.up * 6) * (u.fly ? 1.2 : 1) * (u.mp > 12 ? 1.1 : 1);
+      if (v > bs) { bs = v; best = t; }
+    }
+    if (c.prod !== best) { c.prod = best; c.progress = 0; }
+  }
+}
+function aiPlan(s, fi, P){
+  const city = cityAt(s.x, s.y);
+  let moveIdx = s.units.map((_, i) => i);
+  if (city && city.owner === fi) {
+    const threat = threatNear(city, fi, 6);
+    const keepN = threat > 0 ? Math.max(2, Math.ceil(threat / 3)) : 1;
+    const order = moveIdx.filter(i => s.units[i].type !== 'hero').sort((a, b) => baseStr(s.units[a]) - baseStr(s.units[b]));
+    const keep = order.slice(0, keepN);
+    moveIdx = moveIdx.filter(i => !keep.includes(i));
+    if (!moveIdx.length) return null;
+  }
+  const movers = moveIdx.map(i => s.units[i]);
+  if (stackMp(movers) <= 0) return null;
+  const hasHero = movers.some(u => u.type === 'hero'), fly = canFly(movers);
+  const cands = [];
+  for (const c of S.cities) if (c.owner !== fi) cands.push({x:c.x, y:c.y, val:12 + c.income * 0.6 + (c.capital ? 6 : 0), kind:'city'});
+  for (const e of S.stacks) if (e.owner >= 0 && e.owner !== fi && !cityAt(e.x, e.y) && isVisible(fi, e.x, e.y)) cands.push({x:e.x, y:e.y, val:5 + e.units.length * 1.5, kind:'stack'});
+  if (hasHero) for (const r of S.ruins) if (!r.done) cands.push({x:r.x, y:r.y, val:14, kind:'ruin'});
+  cands.sort((a, b) => Math.max(Math.abs(a.x - s.x), Math.abs(a.y - s.y)) - Math.max(Math.abs(b.x - s.x), Math.abs(b.y - s.y)));
+  let best = null;
+  for (const t of cands.slice(0, 8)) {
+    const path = findPath(s.x, s.y, t.x, t.y, fi, fly);
+    if (!path || !path.length) continue;
+    const turns = pathPlan(path, movers, fly);
+    const last = turns[turns.length - 1]; if (last >= 99) continue;
+    const wc = t.kind === 'ruin' ? 1 : winChance(movers, fi, t.x, t.y, 24);
+    if (wc < P.aggr) continue;
+    const score = t.val * wc / (1 + last * 0.9);
+    if (!best || score > best.score) best = {score, path};
+  }
+  if (!best) {
+    if (city && city.owner === fi) return null;
+    let bd = Infinity, bc = null;
+    for (const c of S.cities) if (c.owner === fi) { const d = Math.max(Math.abs(c.x - s.x), Math.abs(c.y - s.y)); if (d < bd) { bd = d; bc = c; } }
+    if (!bc) return null;
+    const path = findPath(s.x, s.y, bc.x, bc.y, fi, fly);
+    return path && path.length ? {path, moveIdx} : null;
+  }
+  return {path:best.path, moveIdx};
+}
+function* aiTurn(fi){
+  const P = AIDIFF[S.diff] || AIDIFF.normal;
+  aiProduction(fi);
+  yield;
+  const ids = S.stacks.filter(s => s.owner === fi).map(s => s.id);
+  for (const id of ids) {
+    if (S.over) return;
+    const s = stackById(id); if (!s) continue;
+    const plan = aiPlan(s, fi, P);
+    if (!plan) { yield; continue; }
+    const mv = plan.moveIdx.length < s.units.length ? splitStack(s, plan.moveIdx) : s;
+    let final = null;
+    startMove(mv, plan.path, st => { final = st; });
+    yield;
+    if (final && stackById(final.id) && final.units.some(u => u.type === 'hero')) {
+      const r = ruinAt(final.x, final.y);
+      if (r && !r.done) exploreRuin(final, r, false);
+    }
+  }
+  yield;
+}
+
+// ================= ОТРИСОВКА =================
+function fit(){
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cw = innerWidth; ch = innerHeight;
+  canvas.width = Math.round(cw * dpr); canvas.height = Math.round(ch * dpr);
+}
+window.addEventListener('resize', fit);
+function centerOn(x, y){ cam.x = (x + 0.5) * T; cam.y = (y + 0.5) * T; clampCam(); }
+function clampCam(){ if (!S) return; cam.x = clamp(cam.x, 0, S.w * T); cam.y = clamp(cam.y, 0, S.h * T); cam.z = clamp(cam.z, 0.4, 2.2); }
+function drawCity(c, px, py){
+  const o = shownOwner(c), col = o >= 0 ? S.factions[o].color : '#bbb';
+  ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(px + 3, py + 26, 26, 4);
+  ctx.fillStyle = '#d8d0c0'; ctx.fillRect(px + 5, py + 13, 22, 15);
+  ctx.fillStyle = '#c0b8a8'; ctx.fillRect(px + 3, py + 8, 7, 20); ctx.fillRect(px + 22, py + 8, 7, 20);
+  ctx.fillStyle = '#d8d0c0'; for (const bx of [3, 6, 22, 25]) ctx.fillRect(px + bx, py + 5, 2, 3);
+  ctx.fillStyle = '#403020'; ctx.beginPath(); ctx.arc(px + 16, py + 24, 4, Math.PI, 0); ctx.fillRect(px + 12, py + 24, 8, 4); ctx.fill();
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(px + 16, py + 13); ctx.lineTo(px + 16, py + 1); ctx.stroke();
+  ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(px + 16, py + 1); ctx.lineTo(px + 26, py + 4); ctx.lineTo(px + 16, py + 7); ctx.closePath(); ctx.fill();
+  if (c.capital) { ctx.fillStyle = '#fc3'; ctx.font = '8px serif'; ctx.textAlign = 'center'; ctx.fillText('★', px + 16, py + 21); }
+}
+function drawStack(s, px, py, isSel, inCity){
+  const col = colorOf(s.owner);
+  const sz = inCity ? 22 : 28, ox = px + (T - sz) / 2, oy = py + (inCity ? T - sz - 1 : (T - sz) / 2);
+  ctx.globalAlpha = (s.owner === S.cur && S.factions[S.cur].human && stackMp(s.units) <= 0) ? 0.6 : 1;
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(ox, oy, sz, sz);
+  ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.strokeRect(ox + 1, oy + 1, sz - 2, sz - 2);
+  let top = s.units[0];
+  for (const u of s.units) if (u.type !== 'hero' && (top.type === 'hero' || baseStr(u) > baseStr(top))) top = u;
+  ctx.font = `${sz * 0.62}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff'; ctx.fillText(top.type === 'hero' ? '👑' : UT[top.type].e, ox + sz / 2, oy + sz / 2 + 1);
+  if (top.type !== 'hero' && s.units.some(u => u.type === 'hero')) { ctx.font = `${sz * 0.34}px serif`; ctx.fillText('👑', ox + sz * 0.2, oy + sz * 0.2); }
+  if (s.units.length > 1) {
+    ctx.fillStyle = col; ctx.fillRect(ox + sz - 10, oy + sz - 9, 10, 9);
+    ctx.fillStyle = '#000'; ctx.font = 'bold 8px sans-serif'; ctx.fillText(String(s.units.length), ox + sz - 5, oy + sz - 4);
+  }
+  ctx.textBaseline = 'alphabetic'; ctx.globalAlpha = 1;
+  if (isSel) { ctx.strokeStyle = '#ff0'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.strokeRect(ox - 3, oy - 3, sz + 6, sz + 6); ctx.setLineDash([]); }
+}
+function render(){
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (!S || !terrC) return;
+  const z = cam.z;
+  ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * (cw / 2 - cam.x * z), dpr * (ch / 2 - cam.y * z));
+  ctx.imageSmoothingEnabled = z < 1;
+  ctx.drawImage(terrC, 0, 0);
+  const x0 = Math.max(0, Math.floor((cam.x - cw / 2 / z) / T) - 1), x1 = Math.min(S.w - 1, Math.ceil((cam.x + cw / 2 / z) / T) + 1);
+  const y0 = Math.max(0, Math.floor((cam.y - ch / 2 / z) / T) - 1), y1 = Math.min(S.h - 1, Math.ceil((cam.y + ch / 2 / z) / T) + 1);
+  const vw = viewerIdx;
+  for (const r of S.ruins) {
+    if (r.x < x0 || r.x > x1 || r.y < y0 || r.y > y1) continue;
+    const px = r.x * T, py = r.y * T;
+    ctx.fillStyle = r.done ? '#666' : '#bbb';
+    ctx.fillRect(px + 7, py + 12, 4, 14); ctx.fillRect(px + 14, py + 8, 4, 18); ctx.fillRect(px + 21, py + 15, 4, 11);
+    ctx.fillRect(px + 5, py + 26, 22, 3);
+    if (!r.done) { ctx.fillStyle = '#ff6'; ctx.fillRect(px + 25, py + 5, 2, 2); }
+  }
+  for (const c of S.cities) {
+    if (c.x < x0 || c.x > x1 || c.y < y0 || c.y > y1) continue;
+    drawCity(c, c.x * T, c.y * T);
+  }
+  if (S.fog === 'on' && vw >= 0) {
+    const f = S.factions[vw], v = vis[vw];
+    ctx.fillStyle = '#000'; ctx.beginPath();
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (!f.explored[I(x, y)]) ctx.rect(x * T, y * T, T + 0.5, T + 0.5);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath();
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) { const k = I(x, y); if (f.explored[k] && !(v && v[k])) ctx.rect(x * T, y * T, T + 0.5, T + 0.5); }
+    ctx.fill();
+  }
+  if (z >= 0.7) {
+    ctx.font = `bold ${11 / z}px sans-serif`; ctx.textAlign = 'center';
+    for (const c of S.cities) {
+      if (c.x < x0 || c.x > x1 || c.y < y0 || c.y > y1 || !isExplored(vw, c.x, c.y)) continue;
+      ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillText(c.name, c.x * T + 17, c.y * T + T + 11 / z);
+      ctx.fillStyle = '#fff'; ctx.fillText(c.name, c.x * T + 16, c.y * T + T + 10 / z);
+    }
+  }
+  const selS = sel ? stackById(sel.id) : null;
+  const drawn = new Set();
+  for (const s of S.stacks) {
+    if (s.x < x0 || s.x > x1 || s.y < y0 || s.y > y1) continue;
+    if (s.owner !== vw && !isVisible(vw, s.x, s.y)) continue;
+    const key = s.x + ',' + s.y; if (drawn.has(key) && s !== selS) continue; drawn.add(key);
+    drawStack(s, s.x * T, s.y * T, s === selS, !!cityAt(s.x, s.y));
+  }
+  if (preview && selS) {
+    const ps = preview.path;
+    ps.forEach(([x, y], i) => {
+      const t = preview.turns[i], last = i === ps.length - 1;
+      const cx = x * T + 16, cy = y * T + 16;
+      if (last && preview.attack) {
+        ctx.fillStyle = 'rgba(220,40,40,.85)'; ctx.beginPath(); ctx.arc(cx, cy, 9, 0, 6.283); ctx.fill();
+        ctx.font = '12px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; ctx.fillText('⚔️', cx, cy + 1); ctx.textBaseline = 'alphabetic';
+      } else {
+        ctx.fillStyle = t >= 99 ? '#f44' : t === 0 ? '#6f6' : '#fd4';
+        ctx.beginPath(); ctx.arc(cx, cy, last ? 6 : 3.5, 0, 6.283); ctx.fill();
+      }
+      if (t > 0 && t < 99 && (i === ps.length - 1 || preview.turns[i + 1] !== t)) {
+        ctx.font = `bold ${11 / z}px sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = '#000'; ctx.fillText(String(t + 1), cx + 1, cy - 7);
+        ctx.fillStyle = '#fd4'; ctx.fillText(String(t + 1), cx, cy - 8);
+      }
+    });
+  }
+}
+
+// ================= ИНТЕРФЕЙС =================
+function toast(text, color){
+  const box = $('toast'), d = document.createElement('div');
+  d.className = 'tmsg'; d.textContent = text; d.style.borderLeftColor = color || '#888';
+  box.appendChild(d);
+  while (box.children.length > 4) box.removeChild(box.firstChild);
+  setTimeout(() => { if (d.parentNode) d.parentNode.removeChild(d); }, 3800);
+}
+function showModal(html, buttons){
+  modal = true;
+  $('modalBody').innerHTML = html;
+  const b = $('modalBtns'); b.textContent = '';
+  for (const bt of buttons) {
+    const e = document.createElement('button'); e.textContent = bt.t; e.disabled = !!bt.dis;
+    e.onclick = () => { $('modal').classList.remove('show'); modal = false; if (bt.fn) bt.fn(); renderPanel(); };
+    b.appendChild(e);
+  }
+  $('modal').classList.add('show');
+}
+function canHumanAct(){ return !!(S && !S.over && S.factions[S.cur].human && !driver && !mover && !modal && viewerIdx === S.cur); }
+function updateTop(){
+  if (!S) return;
+  const f = S.factions[S.cur];
+  $('fname').textContent = f.name; $('fname').style.color = f.color;
+  $('turnNo').textContent = `Ход ${S.turn}`;
+  const vf = viewerIdx >= 0 ? S.factions[viewerIdx] : f;
+  const net = incomeOf(vf.id) - upkeepOf(vf.id);
+  $('gold').textContent = `💰 ${vf.gold} (${net >= 0 ? '+' : ''}${net})`;
+}
+function selStack(){ return sel ? stackById(sel.id) : null; }
+function selUnits(){ const s = selStack(); if (!s) return []; return s.units.filter((_, i) => sel.mask[i] !== false); }
+function select(s){ sel = s ? {id:s.id, mask:s.units.map(() => true)} : null; preview = null; renderPanel(); }
+function makePreview(s, tx, ty){
+  const units = selUnits(); if (!units.length) { toast('Выберите хотя бы одного бойца'); return; }
+  const fly = canFly(units);
+  const path = findPath(s.x, s.y, tx, ty, S.cur, fly);
+  if (!path || !path.length) { preview = null; toast('Туда не пройти'); renderPanel(); return; }
+  const turns = pathPlan(path, units, fly);
+  const attack = hostileAt(tx, ty, S.cur, true);
+  let wc = null;
+  if (attack && isVisible(S.cur, tx, ty)) wc = winChance(units, S.cur, tx, ty, 80);
+  preview = {tx, ty, path, turns, attack, wc};
+  renderPanel();
+}
+function goPreview(){
+  const s = selStack(); if (!s || !preview || !canHumanAct()) return;
+  const units = selUnits(); if (!units.length) return;
+  let mv = s;
+  if (units.length < s.units.length) mv = splitStack(s, s.units.map((u, i) => sel.mask[i] !== false ? i : -1).filter(i => i >= 0));
+  const path = preview.path.slice();
+  mv.path = path.slice(); preview = null;
+  sel = {id:mv.id, mask:mv.units.map(() => true)};
+  startMove(mv, path, st => { if (st && st.owner === S.cur) sel = {id:st.id, mask:st.units.map(() => true)}; else sel = null; });
+  renderPanel();
+}
+function tapTile(tx, ty){
+  if (!S || !inB(tx, ty) || !canHumanAct()) return;
+  const fi = S.cur, s = selStack();
+  const ownHere = S.stacks.find(o => o.x === tx && o.y === ty && o.owner === fi);
+  const city = cityAt(tx, ty);
+  if (s) {
+    if (preview && preview.tx === tx && preview.ty === ty) { goPreview(); return; }
+    if (tx === s.x && ty === s.y) { if (city && city.owner === fi) openCity(city); else select(null); return; }
+    if (ownHere && Math.max(Math.abs(tx - s.x), Math.abs(ty - s.y)) > 1) { select(ownHere); return; }
+    makePreview(s, tx, ty);
+    return;
+  }
+  if (ownHere) { select(ownHere); return; }
+  if (city && city.owner === fi) { openCity(city); return; }
+  describeTile(tx, ty);
+}
+function describeTile(tx, ty){
+  if (!isExplored(S.cur, tx, ty)) { toast('Неизведанные земли'); return; }
+  const k = I(tx, ty), parts = [];
+  const c = cityAt(tx, ty);
+  if (c) parts.push(`${c.name} (${sideName(shownOwner(c))}): доход ${c.income}, укрепления +${c.def}`);
+  else parts.push(TER_NAME[S.terr[k]] + (S.road[k] ? ', дорога' : ''));
+  const r = ruinAt(tx, ty); if (r) parts.push(r.done ? 'руины (обысканы)' : 'руины — не обысканы!');
+  if (isVisible(S.cur, tx, ty)) for (const q of S.stacks) if (q.x === tx && q.y === ty && q.owner !== S.cur)
+    parts.push(`${sideName(q.owner)}: ${q.units.map(u => u.type === 'hero' ? '👑' : UT[u.type].e).join('')} (сила ${q.units.reduce((a, u) => a + baseStr(u), 0)})`);
+  toast(parts.join(' · '));
+}
+function nextStack(){
+  if (!canHumanAct()) return;
+  const own = S.stacks.filter(s => s.owner === S.cur && stackMp(s.units) > 0 && !(s.path && s.path.length));
+  if (!own.length) { toast('Все отряды походили'); return; }
+  const cur = selStack(); let i = cur ? own.indexOf(cur) : -1;
+  const s = own[(i + 1) % own.length];
+  select(s); centerOn(s.x, s.y);
+}
+function endTurn(){ if (!canHumanAct()) return; sel = null; preview = null; $('city').classList.remove('show'); nextFaction(); }
+function renderPanel(){
+  const chips = $('chips'), info = $('info'), btns = $('btns');
+  chips.textContent = ''; btns.textContent = '';
+  if (!S) { info.textContent = ''; return; }
+  const human = canHumanAct();
+  const s = human ? selStack() : null;
+  if (s && sel.mask.length !== s.units.length) sel.mask = s.units.map(() => true);
+  const addBtn = (t, fn, cls, dis) => { const b = document.createElement('button'); b.textContent = t; if (cls) b.className = cls; b.disabled = !!dis; b.onclick = e => { e.currentTarget.blur(); fn(); }; btns.appendChild(b); };
+  if (s) {
+    s.units.forEach((u, i) => {
+      const d = document.createElement('button');
+      d.className = 'chip' + (sel.mask[i] === false ? ' off' : '') + (u.mp <= 0 ? ' nomp' : '');
+      d.innerHTML = `<span class="em">${u.type === 'hero' ? '👑' : UT[u.type].e}</span>сила ${baseStr(u)}<br>ход ${u.mp}/${maxMp(u)}`;
+      d.title = u.type === 'hero' ? u.name : UT[u.type].name;
+      d.onclick = () => { sel.mask[i] = sel.mask[i] === false; if (preview) makePreview(s, preview.tx, preview.ty); else renderPanel(); };
+      chips.appendChild(d);
+    });
+    const lines = [];
+    for (const u of s.units) if (u.type === 'hero')
+      lines.push(`👑 <b>${u.name}</b>: сила ${heroStr(u)}, командование +${heroCmd(u)}, ход ${maxMp(u)}${u.items.length ? ' · ' + u.items.map(i => ITEMS[i].n).join(', ') : ''}`);
+    const t = S.terr[I(s.x, s.y)];
+    lines.push(`${TER_NAME[t]}${S.road[I(s.x, s.y)] ? ', дорога' : ''} · командование отряда +${cmdOf(selUnits())}`);
+    if (preview) {
+      const lt = preview.turns[preview.turns.length - 1];
+      if (preview.attack) lines.push(`⚔️ Атака${preview.wc !== null ? `: шанс победы ~${Math.round(preview.wc * 100)}%` : ' (силы врага не видны)'}${lt > 0 ? `, через ${lt} х.` : ''}`);
+      else lines.push(lt >= 99 ? 'Путь слишком тяжёл для этих бойцов' : lt === 0 ? 'Дойдёт в этот ход' : `Путь: ходов — ${lt + 1}`);
+    }
+    info.innerHTML = lines.join('<br>');
+    if (preview) addBtn('▶ Идти', goPreview, 'go');
+    const r = ruinAt(s.x, s.y), hero = s.units.find(u => u.type === 'hero');
+    if (r && !r.done && hero) addBtn('🔍 Руины', () => exploreRuin(s, r, true), null, hero.mp <= 0);
+    const c = cityAt(s.x, s.y); if (c && c.owner === S.cur) addBtn('🏰 Город', () => openCity(c));
+    if (s.path && s.path.length) addBtn('✋ Стоп', () => { s.path = []; saveGame(); renderPanel(); });
+  } else {
+    info.textContent = human ? 'Выберите отряд или свой город.' : (S.over ? '' : `Ходят: ${S.factions[S.cur].name}…`);
+  }
+  if (human) {
+    addBtn('⏭ След.', nextStack);
+    addBtn('⌛ Конец хода', endTurn, 'main');
+  }
+}
+function openCity(c){
+  const f = S.factions[S.cur];
+  const el = $('city');
+  const u = c.prod ? UT[c.prod] : null;
+  el.innerHTML = `<h2 style="color:${f.color}">${c.capital ? '★ ' : ''}${c.name}</h2>
+    <p>Доход: ${c.income} · Укрепления: +${c.def}${c.capital ? ' · столица' : ''}<br>
+    Производство: ${u ? `${u.e} ${u.name} — готовность ${c.progress}/${u.turns}${c.progress >= u.turns ? ' (ждёт золота)' : ''}` : 'нет'}</p>`;
+  const list = document.createElement('div'); list.className = 'prod';
+  for (const t of c.types) {
+    const q = UT[t], b = document.createElement('button');
+    b.className = c.prod === t ? 'on' : '';
+    b.innerHTML = `${q.e} <b>${q.name}</b> — сила ${q.str}, ход ${q.mp}${q.fly ? ', летает' : ''}<br><small>цена ${q.cost} 💰 · ${q.turns} х. · содержание ${q.up}/ход</small>`;
+    b.onclick = () => { if (c.prod !== t) { c.prod = t; c.progress = 0; } saveGame(); openCity(c); };
+    list.appendChild(b);
+  }
+  const off = document.createElement('button'); off.textContent = 'Не производить'; off.className = c.prod ? '' : 'on';
+  off.onclick = () => { c.prod = null; c.progress = 0; saveGame(); openCity(c); };
+  list.appendChild(off);
+  const close = document.createElement('button'); close.textContent = 'Закрыть'; close.style.marginTop = '6px';
+  close.onclick = () => el.classList.remove('show');
+  list.appendChild(close);
+  el.appendChild(list);
+  el.classList.add('show');
+}
+
+// ================= ВВОД =================
+const ptrs = new Map(); let drag = null, pinch = null;
+function tileAtScreen(sx, sy){ return [Math.floor(((sx - cw / 2) / cam.z + cam.x) / T), Math.floor(((sy - ch / 2) / cam.z + cam.y) / T)]; }
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  $('city').classList.remove('show');
+  if (ptrs.size === 1) drag = {x:e.clientX, y:e.clientY, cx:cam.x, cy:cam.y, moved:false};
+  else if (ptrs.size === 2) {
+    const [a, b] = [...ptrs.values()];
+    pinch = {d:Math.hypot(a.x - b.x, a.y - b.y) || 1, z:cam.z};
+    if (drag) drag.moved = true;
+  }
+});
+canvas.addEventListener('pointermove', e => {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if (pinch && ptrs.size >= 2) {
+    const [a, b] = [...ptrs.values()];
+    cam.z = clamp(pinch.z * Math.hypot(a.x - b.x, a.y - b.y) / pinch.d, 0.4, 2.2); clampCam();
+  } else if (drag) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 8) drag.moved = true;
+    if (drag.moved) { cam.x = drag.cx - dx / cam.z; cam.y = drag.cy - dy / cam.z; clampCam(); }
+  }
+});
+const ptrEnd = e => {
+  if (!ptrs.has(e.pointerId)) return;
+  if (drag && !drag.moved && ptrs.size === 1) { const [tx, ty] = tileAtScreen(e.clientX, e.clientY); tapTile(tx, ty); }
+  ptrs.delete(e.pointerId);
+  if (ptrs.size < 2) pinch = null;
+  if (ptrs.size === 0) drag = null;
+  else if (ptrs.size === 1 && drag) { const p = [...ptrs.values()][0]; drag = {x:p.x, y:p.y, cx:cam.x, cy:cam.y, moved:true}; }
+};
+canvas.addEventListener('pointerup', ptrEnd);
+canvas.addEventListener('pointercancel', ptrEnd);
+canvas.addEventListener('wheel', e => { e.preventDefault(); cam.z = clamp(cam.z * (e.deltaY < 0 ? 1.12 : 1 / 1.12), 0.4, 2.2); clampCam(); }, {passive:false});
+window.addEventListener('keydown', e => {
+  const tg = e.target; if (tg && (tg.tagName === 'INPUT' || tg.tagName === 'SELECT')) return;
+  if (!S || $('menu').classList.contains('show')) return;
+  const k = e.code, step = 3 * T / cam.z * cam.z;
+  if (k === 'Escape') { e.preventDefault(); if ($('city').classList.contains('show')) $('city').classList.remove('show'); else if (preview) { preview = null; renderPanel(); } else if (sel) select(null); else openMenu(); return; }
+  if (modal) return;
+  if (k === 'ArrowLeft' || k === 'KeyA') { cam.x -= step; clampCam(); }
+  else if (k === 'ArrowRight' || k === 'KeyD') { cam.x += step; clampCam(); }
+  else if (k === 'ArrowUp' || k === 'KeyW') { cam.y -= step; clampCam(); }
+  else if (k === 'ArrowDown' || k === 'KeyS') { cam.y += step; clampCam(); }
+  else if (k === 'Equal' || k === 'NumpadAdd') { cam.z = clamp(cam.z * 1.15, 0.4, 2.2); }
+  else if (k === 'Minus' || k === 'NumpadSubtract') { cam.z = clamp(cam.z / 1.15, 0.4, 2.2); }
+  else if (k === 'Enter' || k === 'Space') { e.preventDefault(); goPreview(); }
+  else if (k === 'KeyN') nextStack();
+  else if (k === 'KeyE') endTurn();
+});
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// ================= СОХРАНЕНИЕ =================
+function saveGame(){
+  if (!S || S.over || !store) return;
+  try {
+    const o = Object.assign({}, S, {terr:S.terr.join(''), road:S.road.join(''),
+      factions:S.factions.map(f => Object.assign({}, f, {explored:Array.from(f.explored).join('')}))});
+    store.setItem(SAVE_KEY, JSON.stringify(o));
+  } catch (_) {}
+}
+function hasSave(){ try { return !!(store && store.getItem(SAVE_KEY)); } catch (_) { return false; } }
+function loadGame(){
+  const o = JSON.parse(store.getItem(SAVE_KEY));
+  o.terr = o.terr.split('').map(Number); o.road = o.road.split('').map(Number);
+  for (const f of o.factions) f.explored = Uint8Array.from(f.explored.split('').map(Number));
+  S = o; buildCityGrid(); renderTerrain();
+  vis = []; for (const f of S.factions) computeVis(f.id);
+  mover = null; driver = null; modal = false; sel = null; preview = null;
+  viewerIdx = S.factions[S.cur].human ? S.cur : (S.factions.find(f => f.human) || {id:-1}).id;
+  const cap = S.cities.find(c => c.owner === S.cur) || S.stacks.find(s => s.owner === S.cur);
+  if (cap) centerOn(cap.x, cap.y);
+  closeMenu(); updateTop(); renderPanel();
+}
+
+// ================= МЕНЮ =================
+function buildMenu(){
+  const box = $('opts'); box.textContent = '';
+  for (const o of OPTS) {
+    const row = document.createElement('div'); row.className = 'frow';
+    const lbl = document.createElement('div'); lbl.className = 'lbl'; lbl.textContent = o.label;
+    const seg = document.createElement('div'); seg.className = 'seg'; const bs = [];
+    const mark = () => bs.forEach(b => b.classList.toggle('on', b.dataset.v === cfg[o.k]));
+    for (const [v, l] of o.opts) {
+      const b = document.createElement('button'); b.textContent = l; b.dataset.v = v;
+      b.onclick = () => { cfg[o.k] = v; saveCfg(); mark(); if (o.k === 'players') buildFacs(); };
+      bs.push(b); seg.appendChild(b);
+    }
+    mark(); row.append(lbl, seg); box.appendChild(row);
+  }
+  buildFacs();
+  $('contBtn').style.display = hasSave() && !(S && !S.over) ? 'block' : 'none';
+}
+function buildFacs(){
+  const box = $('facs'); box.textContent = '';
+  for (let i = 0; i < +cfg.players; i++) {
+    const F = FACTIONS[i], row = document.createElement('div'); row.className = 'frow fac';
+    row.innerHTML = `<span class="sw" style="background:${F.color}"></span><span class="nm">${F.name}<small>${F.desc}</small></span>`;
+    const b = document.createElement('button');
+    const upd = () => { b.textContent = cfg.humans[i] ? '👤 Человек' : '🤖 Робот'; };
+    b.onclick = () => { cfg.humans[i] = !cfg.humans[i]; saveCfg(); upd(); };
+    upd(); row.appendChild(b); box.appendChild(row);
+  }
+}
+function openMenu(){
+  if (S && !S.over) saveGame();
+  buildMenu();
+  $('resumeBtn').style.display = S && !S.over ? 'block' : 'none';
+  $('menu').classList.add('show');
+}
+function closeMenu(){ $('menu').classList.remove('show'); }
+function newGame(){
+  const sz = SIZES[cfg.size], nf = +cfg.players;
+  S = {ver:1, w:sz.w, h:sz.h, turn:1, cur:0, nextId:1, fog:cfg.fog, diff:cfg.diff, over:false,
+       terr:[], road:[], cities:[], ruins:[], stacks:[], factions:[]};
+  for (let i = 0; i < nf; i++) {
+    const F = FACTIONS[i];
+    S.factions.push({id:i, name:F.name, short:F.short, color:F.color, bonus:F.bonus, human:!!cfg.humans[i], alive:true,
+      gold:+cfg.gold, explored:new Uint8Array(sz.w * sz.h), known:{}});
+  }
+  generate(sz, nf);
+  buildCityGrid(); renderTerrain();
+  vis = []; for (const f of S.factions) computeVis(f.id);
+  mover = null; driver = null; modal = false; sel = null; preview = null;
+  const firstHuman = S.factions.find(f => f.human);
+  viewerIdx = firstHuman ? firstHuman.id : -1;
+  const c0 = S.cities.find(c => c.owner === (firstHuman ? firstHuman.id : 0));
+  if (c0) centerOn(c0.x, c0.y); cam.z = 1;
+  $('toast').textContent = '';
+  closeMenu();
+  beginTurn();
+}
+$('newBtn').onclick = e => { e.currentTarget.blur(); newGame(); };
+$('contBtn').onclick = e => { e.currentTarget.blur(); try { loadGame(); } catch (err) { showErr(err); } };
+$('resumeBtn').onclick = e => { e.currentTarget.blur(); closeMenu(); };
+$('menuBtn').onclick = e => { e.currentTarget.blur(); openMenu(); };
+
+// ================= ЦИКЛ =================
+let last = performance.now(), loopErr = false;
+function frame(now){
+  try {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (S && !S.over && !modal) {
+      if (mover) moverTick(dt);
+      else if (driver) {
+        let n = 0;
+        while (driver && !mover && !modal && n++ < 20) {
+          const r = driver.next();
+          if (r.done) { driver = null; const a = driverAfter; driverAfter = null; if (a) a(); break; }
+        }
+        updateTop();
+      }
+    }
+    render();
+  } catch (e) { if (!loopErr) { loopErr = true; showErr(e); } }
+  requestAnimationFrame(frame);
+}
+fit();
+try { buildMenu(); } catch (e) { showErr(e); }
+requestAnimationFrame(frame);
+})();
+</script>
+
+<!-- ===== Полноэкранный режим ===== -->
+<style>
+#fsBtn{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation;color:#fff;font-family:inherit}
+#fsBtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#fsBtn.inbar{width:38px;height:30px;padding:0;margin-left:4px}
+</style>
+<script>
+(function () {
+  var d = document.documentElement;
+  var req = d.requestFullscreen || d.webkitRequestFullscreen;
+  var exit = document.exitFullscreen || document.webkitExitFullscreen;
+  if (!req) return;
+  var cur = function () { return document.fullscreenElement || document.webkitFullscreenElement; };
+  var ICON_ON  = '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+  var ICON_OFF = '<svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+  var b = document.createElement('button');
+  b.id = 'fsBtn'; b.type = 'button'; b.className = 'inbar';
+  var bar = document.getElementById('topbar'), menu = document.getElementById('menuBtn');
+  bar.insertBefore(b, menu);
+  function upd() {
+    var on = !!cur();
+    b.innerHTML = on ? ICON_OFF : ICON_ON;
+    b.title = on ? 'Выйти из полноэкранного режима' : 'Во весь экран';
+    setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 150);
+  }
+  b.addEventListener('click', function (e) {
+    e.preventDefault(); b.blur();
+    if (cur()) { var p = exit.call(document); if (p && p.catch) p.catch(function () {}); }
+    else { var q = req.call(d); if (q && q.catch) q.catch(function () {}); }
+  });
+  document.addEventListener('fullscreenchange', upd);
+  document.addEventListener('webkitfullscreenchange', upd);
+  upd();
+})();
+</script>
+</body>
+</html>
