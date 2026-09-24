@@ -4,6 +4,11 @@
 боя, физики или ИИ (мажор — механики несовместимы, минор — новые механики и корабли,
 патч — исправления). Стенд дополнительно хранит хеш файла движка и коммит.
 
+## 2.1.0
+- Siren crew magnet: pods within `magnetR` (default 420) accelerate toward her at `magnetF` (default 260).
+  Both are tunable ship params (game UI and INI).
+- Siren AI no longer chases pods the magnet will bring anyway, nor pods sitting next to the enemy.
+
 ## 2.0.4
 - Fix: Siren song pods spawned inside the victim's hull, so the victim re-collected its own crew on the next step
   and the song did almost nothing. Pods now spawn outside the hull; the victim cannot pick them up for 1.2 s.

@@ -9,7 +9,7 @@
 
 // Версия движка. Поднимать при любом изменении логики боя, физики или ИИ:
 // мажор — механики несовместимы, минор — новые механики/корабли, патч — исправления. Журнал: CHANGELOG.md.
-const VERSION = '2.0.4';
+const VERSION = '2.1.0';
 
 const WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110, DT = 1 / 120, DEG = Math.PI / 180;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -39,13 +39,14 @@ const LABELS = {
   fighters:'Истребителей за запуск', fighterLife:'Истребитель: время полёта, с', fighterDmg:'Истребитель: урон',
   gloryDmg:'Взрыв: урон в центре', gloryR:'Взрыв: радиус', stealMin:'Песня: мин. экипажа', stealMax:'Песня: макс. экипажа',
   insultGain:'Оскорбление: + батареи', rebirth:'Шанс перерождения, %',
+  magnetR:'Магнит экипажа: радиус', magnetF:'Магнит экипажа: сила',
 };
 const RANGES = {
   crew:[1,99,1], crewMax:[1,99,1], batt:[1,99,1], regen:[0.02,5,0.01], turn:[20,720,1], thrust:[0,2000,10], vmax:[50,1000,10], mass:[0.5,50,0.5],
   fCost:[0,50,1], fCd:[0.02,5,0.01], fDmg:[0,50,1], fSpd:[50,2000,10], fLife:[0.1,10,0.05], fRange:[50,1000,10], homing:[0,720,5],
   sCost:[0,50,1], sCd:[0,10,0.05], sRange:[50,1500,10], sDmg:[0,50,1], sSpd:[50,2000,10], sLife:[0.1,10,0.1],
   fighters:[1,8,1], fighterLife:[1,30,0.5], fighterDmg:[0,10,1], gloryDmg:[0,99,1], gloryR:[50,800,10],
-  stealMin:[0,20,1], stealMax:[0,20,1], insultGain:[0,20,1], rebirth:[0,100,5],
+  stealMin:[0,20,1], stealMax:[0,20,1], insultGain:[0,20,1], rebirth:[0,100,5], magnetR:[0,1500,10], magnetF:[0,2000,10],
 };
 const COMMON = ['crew','crewMax','batt','regen','turn','thrust','vmax','mass'];
 
@@ -97,10 +98,10 @@ const SHIPS = [
    shape:[[1.3,0],[-0.8,0.8],[-0.4,0],[-0.8,-0.8]], ditty:[67,67,74,79,74,79], wave:'square', captains:['Храбрец','Кроха','Бах','Последний']},
   {id:'siren', name:'Сирена', role:'похитительница', r:13, pref:280, frange:520,
    weapon:'Кинжальный выстрел: урон {fDmg}, цена {fCost}.',
-   special:'Песня (цена {sCost}, дальность {sRange}): {stealMin}–{stealMax} экипажа врага вылетают в космос. Подберите их к себе (до {crewMax}).',
+   special:'Песня (цена {sCost}, дальность {sRange}): {stealMin}–{stealMax} экипажа врага вылетают в космос; экипаж в радиусе {magnetR} сам притягивается к Сирене (до {crewMax}).',
    p:{crew:12, crewMax:42, batt:16, regen:0.3, turn:183, thrust:340, vmax:270, mass:3,
-      fCost:1, fCd:0.25, fDmg:2, fSpd:560, fLife:1.0, sCost:5, sCd:1.0, sRange:360, stealMin:2, stealMax:6},
-   keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd','sRange','stealMin','stealMax'],
+      fCost:1, fCd:0.25, fDmg:2, fSpd:560, fLife:1.0, sCost:5, sCd:1.0, sRange:360, stealMin:2, stealMax:6, magnetR:420, magnetF:260},
+   keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd','sRange','stealMin','stealMax','magnetR','magnetF'],
    shape:[[1.3,0],[0.3,0.45],[-0.9,0.3],[-1.1,0],[-0.9,-0.3],[0.3,-0.45]], ditty:[69,72,76,81,76,72], wave:'triangle', captains:['Лорелея','Мелодия','Ария','Нимфа']},
   {id:'parrot', name:'Попугай', role:'задира', r:9, pref:160, frange:300,
    weapon:'Тройная пушка — вперёд и в обе стороны: урон {fDmg} каждым стволом, цена {fCost}.',
@@ -466,6 +467,12 @@ function updateWorld(W, dt){
   for (let i = W.pods.length - 1; i >= 0; i--) {
     const q = W.pods[i];
     q.life -= dt; q.grace = (q.grace || 0) - dt; q.vx *= 1 - 0.6 * dt; q.vy *= 1 - 0.6 * dt;
+    // Siren crew magnet: pods inside magnetR accelerate toward the magnet ship
+    for (const s of W.ships) {
+      if (!s || !s.alive || !s.p.magnetF) continue;
+      const dx = wd(s.x, q.x), dy = wd(s.y, q.y), d = Math.hypot(dx, dy);
+      if (d < s.p.magnetR && d > 1) { q.vx += dx / d * s.p.magnetF * dt; q.vy += dy / d * s.p.magnetF * dt; }
+    }
     q.x = wrapW(q.x + q.vx * dt); q.y = wrapW(q.y + q.vy * dt);
     let got = false;
     for (const s of W.ships) if (s && s.alive && dist2(q, s) < s.def.r + 8 && !(q.grace > 0 && s.side === q.from)) { if (s.crew < s.p.crewMax) { s.crew++; W.stats[s.side].pick++; } got = true; emit(W, 'sfx', {name:'shield'}); break; }
@@ -519,8 +526,13 @@ function aiThink(W, s, e, dt){
   else if (dist > Math.min(pref * 1.15 + 40, frange * 0.95)) thrust = Math.abs(angDiff(desA, s.a)) < 0.7;
   else if (pref > 150 && dist < pref * 0.6) { desA = angE + Math.PI * 0.6; thrust = true; }
   if (id === 'siren' && W.pods.length) {
-    let best = null, bd = 500;
-    for (const q of W.pods) { const pd = dist2(q, s); if (pd < bd) { bd = pd; best = q; } }
+    // pods inside the magnet come by themselves; fetch only far ones that are not in the enemy's face
+    let best = null, bd = 600;
+    for (const q of W.pods) {
+      const pd = dist2(q, s);
+      if (pd < (p.magnetR || 0) || (eAlive && dist2(q, e) < 150)) continue;
+      if (pd < bd) { bd = pd; best = q; }
+    }
     if (best) { desA = Math.atan2(wd(best.y, s.y), wd(best.x, s.x)); thrust = Math.abs(angDiff(desA, s.a)) < 0.8; }
   }
   if (W.planet) {
