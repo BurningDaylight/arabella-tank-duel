@@ -104,7 +104,7 @@ export function compareDirs(pa, pb, opts = {}){
     let line = pad(name(i), 11);
     for (const j of ids) {
       const a = val(A.M[i][j]), b = val(B.M[i][j]), dl = b - a, sig = Math.abs(dl) >= noise(a, A.n, b, B.n);
-      const ds = (dl >= 0 ? '+' : '') + Math.round(dl * 100);
+      const rr = Math.round(dl * 100) || 0, ds = (rr >= 0 ? '+' : '') + rr;
       line += pad(`${Math.round(B.M[i][j].win * 100)}`.padStart(3) + ' ' + (sig ? (dl > 0 ? C.g(ds) : C.r(ds)) : C.d(ds)), 11);
       if (i !== j && sig) changes.push({i, j, a, b, dl});
     }
