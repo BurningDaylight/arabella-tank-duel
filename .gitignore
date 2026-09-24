@@ -1,0 +1,6 @@
+.sounds-work/
+*.orig
+*.rej
+*.bak
+*.bak2
+*.diff
