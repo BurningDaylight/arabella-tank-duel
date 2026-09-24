@@ -36,7 +36,7 @@ if (pos.length !== 2) {
   console.log('Корабли: ' + E.SHIPS.map(d => d.id + ' (' + d.name + ')').join(', '));
   process.exit(1);
 }
-const ia = shipIdx(pos[0]), ib = shipIdx(pos[1]);
+let ia = shipIdx(pos[0]), ib = shipIdx(pos[1]);
 if (ia < 0 || ib < 0) { console.error('Неизвестный корабль. Есть: ' + E.SHIPS.map(d => d.id).join(', ')); process.exit(1); }
 let file, d;
 try { file = findFile(run); d = JSON.parse(readFileSync(file, 'utf8')); } catch (e) { console.error(e.message); process.exit(1); }
@@ -45,8 +45,9 @@ if (!d.examples) { console.error('В этом прогоне нет пример
 // examples are stored once per unordered pair, "i" = lower-index ship won
 const lo = Math.min(ia, ib), hi = Math.max(ia, ib), ex = d.examples[E.SHIPS[lo].id + ',' + E.SHIPS[hi].id];
 if (!ex) { console.error('Эта пара в прогоне не участвовала.'); process.exit(1); }
-const swap = ia !== lo;
-const byKind = {a:(swap ? ex.j : ex.i) || [], b:(swap ? ex.i : ex.j) || [], mutual:ex.mutual || [], timeout:ex.timeout || []};
+// replay must follow bench orientation: bench always puts the lower-index ship first ("i"), so A = lower index
+if (ia !== lo) { console.log(`\n(порядок как на стенде: A — ${E.SHIPS[lo].name}, B — ${E.SHIPS[hi].name})`); ia = lo; ib = hi; }
+const byKind = {a:ex.i || [], b:ex.j || [], mutual:ex.mutual || [], timeout:ex.timeout || []};
 const cA = d.matrix[ia + ',' + ib] || {}, cB = d.matrix[ib + ',' + ia] || {};
 const upset = (cA.win || 0) >= (cB.win || 0) ? 'b' : 'a';
 const kinds = kind === 'all' ? ['a', 'b', 'mutual', 'timeout'] : kind === 'upset' ? [upset] : [kind];
