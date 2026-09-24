@@ -44,9 +44,12 @@ function seedOf(i, j, k, base){ return (((i + 1) * 73856093) ^ ((j + 1) * 193496
 if (!isMainThread) {
   const {jobs, opt} = workerData;
   for (const [i, j] of jobs) {
-    const r = {i, j, wi:0, wj:0, draw:0, mutual:0, timeout:0, tSum:0, crewI:0, crewJ:0, si:{}, sj:{}};
+    const r = {i, j, wi:0, wj:0, draw:0, mutual:0, timeout:0, tSum:0, crewI:0, crewJ:0, si:{}, sj:{}, ex:{i:[], j:[], mutual:[], timeout:[]}};
     for (let k = 0; k < opt.n; k++) {
-      const m = runMatch(i, j, seedOf(i, j, k, opt.seed), opt);
+      const seed = seedOf(i, j, k, opt.seed), m = runMatch(i, j, seed, opt);
+      // keep a few replayable examples of every outcome for watch mode (watch.mjs)
+      const kind = m.w === 0 ? 'i' : m.w === 1 ? 'j' : m.timeout ? 'timeout' : 'mutual';
+      if (r.ex[kind].length < 5) r.ex[kind].push({seed, t:+m.t.toFixed(3)});
       r.tSum += m.t;
       for (const k in m.sa) r.si[k] = (r.si[k] || 0) + m.sa[k];
       for (const k in m.sb) r.sj[k] = (r.sj[k] || 0) + m.sb[k];
@@ -100,7 +103,7 @@ function main(){
     let txt; try { txt = readFileSync(a.ini, 'utf8'); } catch (_) { console.error(`Нет файла настроек: ${a.ini}`); process.exit(1); }
     const r = E.parseIni(txt);
     opt.phys = r.phys; opt.ships = r.ships;
-    if (r.game.planet) opt.planet = r.game.planet !== 'off';
+    if (r.game.planet) opt.planet = a.planet = r.game.planet !== 'off';
     ini = {path:a.ini, file:basename(a.ini), sha:sha(txt), values:r.n, meta:r.meta || {}};
   }
   const meta = {engine:E.VERSION || '?', engineSha:sha(readFileSync(ENGINE)), git:gitInfo(), ini,
@@ -173,9 +176,11 @@ function finish(a, ids, res, t0, meta){
   for (const i of ids) { const c = cell(i, i); if (c && Math.abs(c.win - c.lose) > mw) { mw = Math.abs(c.win - c.lose); mwName = name(i); } }
   console.log(`\nПроверка зеркал: макс. перекос сторон — ${(mw * 100).toFixed(0)}%${mwName ? ' (' + mwName + ')' : ''}`);
 
+  // replayable examples per pair, keyed 'idI,idJ' with i <= j in ship order
+  const examples = Object.fromEntries(res.map(r => [E.SHIPS[r.i].id + ',' + E.SHIPS[r.j].id, r.ex || {}]));
   mkdirSync(a.out, {recursive:true});
   const args = {n:a.n, time:a.time, diff:a.diff, ini:a.ini, planet:a.planet, seed:a.seed, ships:a.ships, workers:a.workers};
-  const data = {meta, date:meta.date, args, seconds:secs, ships:ids.map(i => ({i, id:E.SHIPS[i].id, name:name(i), score:score(i), stat:shipStat(i)})), matrix:M};
+  const data = {meta, date:meta.date, args, seconds:secs, ships:ids.map(i => ({i, id:E.SHIPS[i].id, name:name(i), score:score(i), stat:shipStat(i)})), matrix:M, examples};
   writeFileSync(join(a.out, 'results.json'), JSON.stringify(data, null, 1));
   const csv = ['A,B,win,lose,draw,mutual,timeout,avg_time,avg_crew_left'];
   for (const i of ids) for (const j of ids) { const c = cell(i, j); csv.push([E.SHIPS[i].id, E.SHIPS[j].id, c.win.toFixed(3), c.lose.toFixed(3), c.draw.toFixed(3), c.mutual.toFixed(3), c.timeout.toFixed(3), c.t.toFixed(1), c.crew.toFixed(2)].join(',')); }
