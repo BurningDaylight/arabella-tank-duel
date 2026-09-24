@@ -1,0 +1,1348 @@
+{
+ "meta": {
+  "engine": "2.0.3",
+  "engineSha": "b9dad6923b79",
+  "git": {
+   "commit": "41bc5c7",
+   "dirty": false,
+   "dirtyFiles": []
+  },
+  "ini": {
+   "path": "tools/melee-bench/balance/balance-v3.ini",
+   "file": "balance-v3.ini",
+   "sha": "c18d8f850ff2",
+   "values": 21,
+   "meta": {
+    "version": "balance-v3",
+    "based_on": "balance-v2",
+    "note": "Левиафану режем залп, истребители возвращаем как в v1"
+   }
+  },
+  "node": "v22.21.0",
+  "host": "vostok",
+  "date": "2026-09-24T15:07:25.237Z",
+  "note": "",
+  "params": {
+   "phys": {
+    "gravity": 100,
+    "gRange": 1300,
+    "slingOut": 45,
+    "overCap": 220,
+    "decay": 25,
+    "planetDmg": 1,
+    "asteroids": 6
+   },
+   "ships": {
+    "bastion": {
+     "crew": 18,
+     "crewMax": 18,
+     "batt": 18,
+     "regen": 0.45,
+     "turn": 150,
+     "thrust": 240,
+     "vmax": 210,
+     "mass": 6,
+     "fCost": 7,
+     "fCd": 0.8,
+     "fDmg": 4,
+     "fSpd": 420,
+     "fLife": 3.2,
+     "homing": 140,
+     "sCost": 4,
+     "sCd": 0.3,
+     "sRange": 170,
+     "sDmg": 1
+    },
+    "leviathan": {
+     "crew": 36,
+     "crewMax": 36,
+     "batt": 42,
+     "regen": 0.28,
+     "turn": 92,
+     "thrust": 170,
+     "vmax": 170,
+     "mass": 10,
+     "fCost": 8,
+     "fCd": 0.6,
+     "fDmg": 3,
+     "fSpd": 620,
+     "fLife": 1.3,
+     "sCost": 10,
+     "sCd": 1,
+     "fighters": 2,
+     "fighterLife": 6,
+     "fighterDmg": 1
+    },
+    "hare": {
+     "crew": 20,
+     "crewMax": 20,
+     "batt": 14,
+     "regen": 0.22,
+     "turn": 206,
+     "thrust": 420,
+     "vmax": 300,
+     "mass": 4,
+     "fCost": 1,
+     "fCd": 0.15,
+     "fDmg": 1,
+     "fSpd": 520,
+     "fLife": 0.7,
+     "sCost": 4,
+     "sCd": 0.35,
+     "sDmg": 2,
+     "sSpd": 380,
+     "sLife": 2.6,
+     "homing": 100
+    },
+    "wraith": {
+     "crew": 22,
+     "crewMax": 22,
+     "batt": 16,
+     "regen": 0.3,
+     "turn": 150,
+     "thrust": 280,
+     "vmax": 240,
+     "mass": 6,
+     "fCost": 1,
+     "fCd": 0.07,
+     "fDmg": 2,
+     "fSpd": 360,
+     "fLife": 0.5,
+     "sCost": 3,
+     "sCd": 0.4
+    },
+    "blink": {
+     "crew": 6,
+     "crewMax": 6,
+     "batt": 20,
+     "regen": 0.1,
+     "turn": 286,
+     "thrust": 0,
+     "vmax": 320,
+     "mass": 1,
+     "fCost": 3,
+     "fCd": 0.2,
+     "fDmg": 1,
+     "fRange": 180,
+     "sCost": 3,
+     "sCd": 0.6
+    },
+    "sting": {
+     "crew": 6,
+     "crewMax": 6,
+     "batt": 4,
+     "regen": 0.3,
+     "turn": 258,
+     "thrust": 520,
+     "vmax": 330,
+     "mass": 1,
+     "fCost": 1,
+     "fCd": 0.18,
+     "fDmg": 1,
+     "fSpd": 560,
+     "fLife": 0.55,
+     "gloryDmg": 32,
+     "gloryR": 220
+    },
+    "siren": {
+     "crew": 12,
+     "crewMax": 42,
+     "batt": 16,
+     "regen": 0.3,
+     "turn": 183,
+     "thrust": 340,
+     "vmax": 270,
+     "mass": 3,
+     "fCost": 1,
+     "fCd": 0.25,
+     "fDmg": 2,
+     "fSpd": 560,
+     "fLife": 1,
+     "sCost": 4,
+     "sCd": 1,
+     "sRange": 360,
+     "stealMin": 3,
+     "stealMax": 7
+    },
+    "parrot": {
+     "crew": 8,
+     "crewMax": 8,
+     "batt": 12,
+     "regen": 1.5,
+     "turn": 229,
+     "thrust": 480,
+     "vmax": 320,
+     "mass": 1,
+     "fCost": 1,
+     "fCd": 0.12,
+     "fDmg": 1,
+     "fSpd": 500,
+     "fLife": 0.6,
+     "sCd": 0.6,
+     "insultGain": 3,
+     "rebirth": 50
+    }
+   }
+  }
+ },
+ "date": "2026-09-24T15:07:25.237Z",
+ "args": {
+  "n": 1000,
+  "time": 90,
+  "diff": "hard",
+  "ini": "tools/melee-bench/balance/balance-v3.ini",
+  "planet": true,
+  "seed": 0,
+  "ships": null,
+  "workers": 23
+ },
+ "seconds": 15.98,
+ "ships": [
+  {
+   "i": 0,
+   "id": "bastion",
+   "name": "Бастион",
+   "score": 0.4542142857142858,
+   "stat": {
+    "to": 0.015142857142857142,
+    "t": 16.674714285714067,
+    "fire": 8.624,
+    "spec": 0.001142857142857143,
+    "fighter": 0,
+    "planet": 0.03242857142857143,
+    "steal": 0
+   }
+  },
+  {
+   "i": 1,
+   "id": "leviathan",
+   "name": "Левиафан",
+   "score": 0.9719285714285714,
+   "stat": {
+    "to": 0,
+    "t": 7.868754761904762,
+    "fire": 6.454571428571428,
+    "spec": 0,
+    "fighter": 7.482857142857142,
+    "planet": 0.03785714285714286,
+    "steal": 0
+   }
+  },
+  {
+   "i": 2,
+   "id": "hare",
+   "name": "Заяц",
+   "score": 0.7252142857142859,
+   "stat": {
+    "to": 0.03528571428571429,
+    "t": 23.120754761904916,
+    "fire": 0.01942857142857143,
+    "spec": 11.017428571428571,
+    "fighter": 0,
+    "planet": 0.007428571428571429,
+    "steal": 0
+   }
+  },
+  {
+   "i": 3,
+   "id": "wraith",
+   "name": "Призрак",
+   "score": 0.3439999999999999,
+   "stat": {
+    "to": 0.0064285714285714285,
+    "t": 23.41807023809469,
+    "fire": 6.90142857142857,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.05485714285714286,
+    "steal": 0
+   }
+  },
+  {
+   "i": 4,
+   "id": "blink",
+   "name": "Блинк",
+   "score": 0.6470714285714285,
+   "stat": {
+    "to": 0.057428571428571426,
+    "t": 27.271777380952564,
+    "fire": 11.166857142857143,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   }
+  },
+  {
+   "i": 5,
+   "id": "sting",
+   "name": "Жало",
+   "score": 0.2742142857142857,
+   "stat": {
+    "to": 0,
+    "t": 3.148126190476176,
+    "fire": 0.11157142857142857,
+    "spec": 10.155142857142858,
+    "fighter": 0,
+    "planet": 0.00014285714285714287,
+    "steal": 0
+   }
+  },
+  {
+   "i": 6,
+   "id": "siren",
+   "name": "Сирена",
+   "score": 0.34471428571428575,
+   "stat": {
+    "to": 0.0008571428571428572,
+    "t": 8.460409523809501,
+    "fire": 6.788428571428573,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.007857142857142858,
+    "steal": 16.299857142857142
+   }
+  },
+  {
+   "i": 7,
+   "id": "parrot",
+   "name": "Попугай",
+   "score": 0.23864285714285716,
+   "stat": {
+    "to": 0.001142857142857143,
+    "t": 10.803314285714137,
+    "fire": 4.909714285714286,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.010428571428571428,
+    "steal": 0
+   }
+  }
+ ],
+ "matrix": {
+  "0,5": {
+   "win": 0.747,
+   "lose": 0,
+   "crew": 0.9950171054588725,
+   "dmg": {
+    "fire": 5.386,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.253,
+   "mutual": 0.253,
+   "timeout": 0,
+   "t": 2.580041666666661
+  },
+  "5,0": {
+   "win": 0,
+   "lose": 0.747,
+   "crew": 0,
+   "dmg": {
+    "fire": 0.182,
+    "spec": 4.439,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.253,
+   "mutual": 0.253,
+   "timeout": 0,
+   "t": 2.580041666666661
+  },
+  "2,5": {
+   "win": 0.406,
+   "lose": 0,
+   "crew": 0.09088669950738935,
+   "dmg": {
+    "fire": 0,
+    "spec": 1.328,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.594,
+   "mutual": 0.594,
+   "timeout": 0,
+   "t": 2.5247416666666607
+  },
+  "5,2": {
+   "win": 0,
+   "lose": 0.406,
+   "crew": 0,
+   "dmg": {
+    "fire": 0.241,
+    "spec": 19.021,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.594,
+   "mutual": 0.594,
+   "timeout": 0,
+   "t": 2.5247416666666607
+  },
+  "1,5": {
+   "win": 1,
+   "lose": 0,
+   "crew": 0.9027222222222312,
+   "dmg": {
+    "fire": 5.552,
+    "spec": 0,
+    "fighter": 0.288,
+    "planet": 0.001,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 2.5163916666666655
+  },
+  "5,1": {
+   "win": 0,
+   "lose": 1,
+   "crew": 0,
+   "dmg": {
+    "fire": 0.064,
+    "spec": 1.49,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 2.5163916666666655
+  },
+  "0,6": {
+   "win": 0.968,
+   "lose": 0.032,
+   "crew": 0.7210169880624472,
+   "dmg": {
+    "fire": 11.866,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.011,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 6.686833333333428
+  },
+  "6,0": {
+   "win": 0.032,
+   "lose": 0.968,
+   "crew": 0.09747023809523815,
+   "dmg": {
+    "fire": 5.414,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.003,
+    "steal": 12.874
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 6.686833333333428
+  },
+  "1,6": {
+   "win": 1,
+   "lose": 0,
+   "crew": 0.7695555555555608,
+   "dmg": {
+    "fire": 8.52,
+    "spec": 0,
+    "fighter": 3.477,
+    "planet": 0.006,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 4.781166666666713
+  },
+  "6,1": {
+   "win": 0,
+   "lose": 1,
+   "crew": 0,
+   "dmg": {
+    "fire": 4.056,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.003,
+    "steal": 8.133
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 4.781166666666713
+  },
+  "2,6": {
+   "win": 0.973,
+   "lose": 0.025,
+   "crew": 0.891469681397735,
+   "dmg": {
+    "fire": 0,
+    "spec": 11.898,
+    "fighter": 0,
+    "planet": 0.002,
+    "steal": 0
+   },
+   "draw": 0.002,
+   "mutual": 0.002,
+   "timeout": 0,
+   "t": 8.291316666666777
+  },
+  "6,2": {
+   "win": 0.025,
+   "lose": 0.973,
+   "crew": 0.09333333333333334,
+   "dmg": {
+    "fire": 2.65,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.004,
+    "steal": 18.407
+   },
+   "draw": 0.002,
+   "mutual": 0.002,
+   "timeout": 0,
+   "t": 8.291316666666777
+  },
+  "1,7": {
+   "win": 0.979,
+   "lose": 0.02,
+   "crew": 0.847463398025202,
+   "dmg": {
+    "fire": 8.248,
+    "spec": 0,
+    "fighter": 7.955,
+    "planet": 0.007,
+    "steal": 0
+   },
+   "draw": 0.001,
+   "mutual": 0.001,
+   "timeout": 0,
+   "t": 7.394583333333288
+  },
+  "7,1": {
+   "win": 0.02,
+   "lose": 0.979,
+   "crew": 0.6125,
+   "dmg": {
+    "fire": 2.832,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.003,
+    "steal": 0
+   },
+   "draw": 0.001,
+   "mutual": 0.001,
+   "timeout": 0,
+   "t": 7.394583333333288
+  },
+  "0,1": {
+   "win": 0,
+   "lose": 1,
+   "crew": 0,
+   "dmg": {
+    "fire": 3.772,
+    "spec": 0.006,
+    "fighter": 0,
+    "planet": 0.009,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 8.963800000000063
+  },
+  "1,0": {
+   "win": 1,
+   "lose": 0,
+   "crew": 0.7249722222222152,
+   "dmg": {
+    "fire": 8.391,
+    "spec": 0,
+    "fighter": 9.6,
+    "planet": 0.023,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 8.963800000000063
+  },
+  "4,6": {
+   "win": 0.992,
+   "lose": 0.002,
+   "crew": 0.9314516129032252,
+   "dmg": {
+    "fire": 12.088,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.006,
+   "mutual": 0,
+   "timeout": 0.006,
+   "t": 8.755966666666637
+  },
+  "6,4": {
+   "win": 0.002,
+   "lose": 0.992,
+   "crew": 0.08333333333333333,
+   "dmg": {
+    "fire": 0.029,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.001,
+    "steal": 13.676
+   },
+   "draw": 0.006,
+   "mutual": 0,
+   "timeout": 0.006,
+   "t": 8.755966666666637
+  },
+  "1,2": {
+   "win": 0.994,
+   "lose": 0.006,
+   "crew": 0.7017661524703772,
+   "dmg": {
+    "fire": 6.6,
+    "spec": 0,
+    "fighter": 13.377,
+    "planet": 0.015,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 7.552208333333433
+  },
+  "2,1": {
+   "win": 0.006,
+   "lose": 0.994,
+   "crew": 0.15833333333333333,
+   "dmg": {
+    "fire": 0.004,
+    "spec": 6.129,
+    "fighter": 0,
+    "planet": 0.004,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 7.552208333333433
+  },
+  "1,1": {
+   "win": 0.446,
+   "lose": 0.439,
+   "crew": 0.1605007473841555,
+   "dmg": {
+    "fire": 4.963,
+    "spec": 0,
+    "fighter": 23.172,
+    "planet": 0.019,
+    "steal": 0
+   },
+   "draw": 0.115,
+   "mutual": 0.115,
+   "timeout": 0,
+   "t": 9.483891666666738
+  },
+  "2,2": {
+   "win": 0.475,
+   "lose": 0.506,
+   "crew": 0.11315789473684297,
+   "dmg": {
+    "fire": 0.002,
+    "spec": 18.824,
+    "fighter": 0,
+    "planet": 0.01,
+    "steal": 0
+   },
+   "draw": 0.019,
+   "mutual": 0.019,
+   "timeout": 0,
+   "t": 10.283100000000047
+  },
+  "2,7": {
+   "win": 0.972,
+   "lose": 0.028,
+   "crew": 0.8271090534979418,
+   "dmg": {
+    "fire": 0,
+    "spec": 15.051,
+    "fighter": 0,
+    "planet": 0.001,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 8.527516666666594
+  },
+  "7,2": {
+   "win": 0.028,
+   "lose": 0.972,
+   "crew": 0.4107142857142857,
+   "dmg": {
+    "fire": 3.92,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.001,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 8.527516666666594
+  },
+  "1,4": {
+   "win": 0.991,
+   "lose": 0.009,
+   "crew": 0.8768359681578766,
+   "dmg": {
+    "fire": 0.597,
+    "spec": 0,
+    "fighter": 5.371,
+    "planet": 0.025,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 9.888808333333332
+  },
+  "4,1": {
+   "win": 0.009,
+   "lose": 0.991,
+   "crew": 0.5925925925925926,
+   "dmg": {
+    "fire": 0.503,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 9.888808333333332
+  },
+  "0,7": {
+   "win": 0.797,
+   "lose": 0.203,
+   "crew": 0.8979506482643257,
+   "dmg": {
+    "fire": 13.826,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.027,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 10.792449999999816
+  },
+  "7,0": {
+   "win": 0.203,
+   "lose": 0.797,
+   "crew": 0.6471674876847291,
+   "dmg": {
+    "fire": 5.091,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.003,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 10.792449999999816
+  },
+  "5,6": {
+   "win": 0,
+   "lose": 0.003,
+   "crew": 0,
+   "dmg": {
+    "fire": 0.024,
+    "spec": 11.94,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.997,
+   "mutual": 0.997,
+   "timeout": 0,
+   "t": 2.577216666666663
+  },
+  "6,5": {
+   "win": 0.003,
+   "lose": 0,
+   "crew": 0.2857142857142857,
+   "dmg": {
+    "fire": 0.04,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 4.381
+   },
+   "draw": 0.997,
+   "mutual": 0.997,
+   "timeout": 0,
+   "t": 2.577216666666663
+  },
+  "5,7": {
+   "win": 0,
+   "lose": 0.498,
+   "crew": 0,
+   "dmg": {
+    "fire": 0.017,
+    "spec": 7.98,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.502,
+   "mutual": 0.502,
+   "timeout": 0,
+   "t": 2.483791666666666
+  },
+  "7,5": {
+   "win": 0.498,
+   "lose": 0,
+   "crew": 0.9987449799196787,
+   "dmg": {
+    "fire": 0.015,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.502,
+   "mutual": 0.502,
+   "timeout": 0,
+   "t": 2.483791666666666
+  },
+  "1,3": {
+   "win": 0.839,
+   "lose": 0.161,
+   "crew": 0.6023374387498346,
+   "dmg": {
+    "fire": 7.274,
+    "spec": 0,
+    "fighter": 12.312,
+    "planet": 0.188,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 13.98432499999985
+  },
+  "3,1": {
+   "win": 0.161,
+   "lose": 0.839,
+   "crew": 0.6713721061547147,
+   "dmg": {
+    "fire": 14.635,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.036,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 13.98432499999985
+  },
+  "5,5": {
+   "win": 0,
+   "lose": 0,
+   "crew": 0,
+   "dmg": {
+    "fire": 0.003,
+    "spec": 2.988,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 1,
+   "mutual": 1,
+   "timeout": 0,
+   "t": 2.4244083333333273
+  },
+  "4,7": {
+   "win": 0.993,
+   "lose": 0,
+   "crew": 0.8981201745552226,
+   "dmg": {
+    "fire": 16.291,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.007,
+   "mutual": 0,
+   "timeout": 0.007,
+   "t": 15.935033333333063
+  },
+  "7,4": {
+   "win": 0,
+   "lose": 0.993,
+   "crew": 0,
+   "dmg": {
+    "fire": 0.634,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.001,
+    "steal": 0
+   },
+   "draw": 0.007,
+   "mutual": 0,
+   "timeout": 0.007,
+   "t": 15.935033333333063
+  },
+  "3,3": {
+   "win": 0.514,
+   "lose": 0.462,
+   "crew": 0.2758224266006376,
+   "dmg": {
+    "fire": 19.074,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.078,
+    "steal": 0
+   },
+   "draw": 0.024,
+   "mutual": 0.024,
+   "timeout": 0,
+   "t": 17.181516666666376
+  },
+  "0,2": {
+   "win": 0,
+   "lose": 1,
+   "crew": 0,
+   "dmg": {
+    "fire": 8.256,
+    "spec": 0.001,
+    "fighter": 0,
+    "planet": 0.032,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 22.98168333333271
+  },
+  "2,0": {
+   "win": 1,
+   "lose": 0,
+   "crew": 0.5865500000000062,
+   "dmg": {
+    "fire": 0.008,
+    "spec": 17.96,
+    "fighter": 0,
+    "planet": 0.012,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 22.98168333333271
+  },
+  "3,6": {
+   "win": 0.082,
+   "lose": 0.918,
+   "crew": 0.6784922394678493,
+   "dmg": {
+    "fire": 2.666,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.047,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 15.328874999999808
+  },
+  "6,3": {
+   "win": 0.918,
+   "lose": 0.082,
+   "crew": 0.24123353044921628,
+   "dmg": {
+    "fire": 20.69,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.033,
+    "steal": 26.246
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 15.328874999999808
+  },
+  "6,7": {
+   "win": 0.929,
+   "lose": 0.068,
+   "crew": 0.23194423086780422,
+   "dmg": {
+    "fire": 14.64,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.011,
+    "steal": 30.382
+   },
+   "draw": 0.003,
+   "mutual": 0.003,
+   "timeout": 0,
+   "t": 12.80149166666648
+  },
+  "7,6": {
+   "win": 0.068,
+   "lose": 0.929,
+   "crew": 0.6544117647058824,
+   "dmg": {
+    "fire": 2.972,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.01,
+    "steal": 0
+   },
+   "draw": 0.003,
+   "mutual": 0.003,
+   "timeout": 0,
+   "t": 12.80149166666648
+  },
+  "0,3": {
+   "win": 0.136,
+   "lose": 0.861,
+   "crew": 0.6176470588235291,
+   "dmg": {
+    "fire": 14.698,
+    "spec": 0.001,
+    "fighter": 0,
+    "planet": 0.095,
+    "steal": 0
+   },
+   "draw": 0.003,
+   "mutual": 0,
+   "timeout": 0.003,
+   "t": 26.524133333332774
+  },
+  "3,0": {
+   "win": 0.861,
+   "lose": 0.136,
+   "crew": 0.3804244535951829,
+   "dmg": {
+    "fire": 16.37,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.083,
+    "steal": 0
+   },
+   "draw": 0.003,
+   "mutual": 0,
+   "timeout": 0.003,
+   "t": 26.524133333332774
+  },
+  "6,6": {
+   "win": 0.474,
+   "lose": 0.46,
+   "crew": 0.06957002210166756,
+   "dmg": {
+    "fire": 10.632,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.006,
+    "steal": 20.427
+   },
+   "draw": 0.066,
+   "mutual": 0.066,
+   "timeout": 0,
+   "t": 10.885191666666623
+  },
+  "0,0": {
+   "win": 0.476,
+   "lose": 0.448,
+   "crew": 0.13713818860877822,
+   "dmg": {
+    "fire": 16.799,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.115,
+    "steal": 0
+   },
+   "draw": 0.076,
+   "mutual": 0.074,
+   "timeout": 0.002,
+   "t": 31.83037499999915
+  },
+  "3,4": {
+   "win": 0.105,
+   "lose": 0.855,
+   "crew": 0.5142857142857142,
+   "dmg": {
+    "fire": 3.798,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.082,
+    "steal": 0
+   },
+   "draw": 0.04,
+   "mutual": 0,
+   "timeout": 0.04,
+   "t": 43.60344166666556
+  },
+  "4,3": {
+   "win": 0.855,
+   "lose": 0.105,
+   "crew": 0.39337231968810754,
+   "dmg": {
+    "fire": 20.063,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.04,
+   "mutual": 0,
+   "timeout": 0.04,
+   "t": 43.60344166666556
+  },
+  "3,5": {
+   "win": 0.506,
+   "lose": 0,
+   "crew": 0.13492633848365115,
+   "dmg": {
+    "fire": 0.074,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.023,
+    "steal": 0
+   },
+   "draw": 0.494,
+   "mutual": 0.494,
+   "timeout": 0,
+   "t": 6.219524999999904
+  },
+  "5,3": {
+   "win": 0,
+   "lose": 0.506,
+   "crew": 0,
+   "dmg": {
+    "fire": 0.25,
+    "spec": 20.225,
+    "fighter": 0,
+    "planet": 0.001,
+    "steal": 0
+   },
+   "draw": 0.494,
+   "mutual": 0.494,
+   "timeout": 0,
+   "t": 6.219524999999904
+  },
+  "0,4": {
+   "win": 0.352,
+   "lose": 0.545,
+   "crew": 0.789930555555557,
+   "dmg": {
+    "fire": 2.564,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.053,
+    "steal": 0
+   },
+   "draw": 0.103,
+   "mutual": 0,
+   "timeout": 0.103,
+   "t": 38.194058333333025
+  },
+  "4,0": {
+   "win": 0.545,
+   "lose": 0.352,
+   "crew": 0.9840978593272169,
+   "dmg": {
+    "fire": 11.787,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.103,
+   "mutual": 0,
+   "timeout": 0.103,
+   "t": 38.194058333333025
+  },
+  "4,4": {
+   "win": 0.522,
+   "lose": 0.478,
+   "crew": 0.22509578544061357,
+   "dmg": {
+    "fire": 5.339,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0,
+   "mutual": 0,
+   "timeout": 0,
+   "t": 19.944124999999516
+  },
+  "3,7": {
+   "win": 0.402,
+   "lose": 0.596,
+   "crew": 0.3383084577114431,
+   "dmg": {
+    "fire": 7.422,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.084,
+    "steal": 0
+   },
+   "draw": 0.002,
+   "mutual": 0.001,
+   "timeout": 0.001,
+   "t": 17.68833333333304
+  },
+  "7,3": {
+   "win": 0.596,
+   "lose": 0.402,
+   "crew": 0.7397231543624161,
+   "dmg": {
+    "fire": 18.904,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.055,
+    "steal": 0
+   },
+   "draw": 0.002,
+   "mutual": 0.001,
+   "timeout": 0.001,
+   "t": 17.68833333333304
+  },
+  "2,3": {
+   "win": 0.978,
+   "lose": 0.021,
+   "crew": 0.8499999999999961,
+   "dmg": {
+    "fire": 0.118,
+    "spec": 21.532,
+    "fighter": 0,
+    "planet": 0.013,
+    "steal": 0
+   },
+   "draw": 0.001,
+   "mutual": 0,
+   "timeout": 0.001,
+   "t": 40.57785833333188
+  },
+  "3,2": {
+   "win": 0.021,
+   "lose": 0.978,
+   "crew": 0.6883116883116882,
+   "dmg": {
+    "fire": 3.345,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.029,
+    "steal": 0
+   },
+   "draw": 0.001,
+   "mutual": 0,
+   "timeout": 0.001,
+   "t": 40.57785833333188
+  },
+  "4,5": {
+   "win": 0.001,
+   "lose": 0,
+   "crew": 1,
+   "dmg": {
+    "fire": 1.343,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.999,
+   "mutual": 0.999,
+   "timeout": 0,
+   "t": 3.135175000000015
+  },
+  "5,4": {
+   "win": 0,
+   "lose": 0.001,
+   "crew": 0,
+   "dmg": {
+    "fire": 0.003,
+    "spec": 5.991,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.999,
+   "mutual": 0.999,
+   "timeout": 0,
+   "t": 3.135175000000015
+  },
+  "7,7": {
+   "win": 0.413,
+   "lose": 0.415,
+   "crew": 0.4727602905569007,
+   "dmg": {
+    "fire": 8.801,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0.031,
+    "steal": 0
+   },
+   "draw": 0.172,
+   "mutual": 0.014,
+   "timeout": 0.158,
+   "t": 42.71247500000005
+  },
+  "2,4": {
+   "win": 0.32,
+   "lose": 0.434,
+   "crew": 0.4593750000000002,
+   "dmg": {
+    "fire": 0.006,
+    "spec": 3.224,
+    "fighter": 0,
+    "planet": 0.02,
+    "steal": 0
+   },
+   "draw": 0.246,
+   "mutual": 0,
+   "timeout": 0.246,
+   "t": 71.38995833333634
+  },
+  "4,2": {
+   "win": 0.434,
+   "lose": 0.32,
+   "crew": 0.7734254992319514,
+   "dmg": {
+    "fire": 16.093,
+    "spec": 0,
+    "fighter": 0,
+    "planet": 0,
+    "steal": 0
+   },
+   "draw": 0.246,
+   "mutual": 0,
+   "timeout": 0.246,
+   "t": 71.38995833333634
+  }
+ }
+}
