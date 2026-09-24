@@ -62,7 +62,7 @@ function paramChanges(A, B, name){
   if (!A.meta || !B.meta || !A.meta.params || !B.meta.params) return null;
   const pa = A.meta.params, pb = B.meta.params;
   for (const k in pb.phys) if (pa.phys[k] !== pb.phys[k]) out.push({who:'Физика', k, a:pa.phys[k], b:pb.phys[k]});
-  for (const id in pb.ships) { const sa = pa.ships[id] || {}, sb = pb.ships[id]; for (const k in sb) if (sa[k] !== sb[k]) out.push({who:name(id), k, a:sa[k], b:sb[k]}); }
+  for (const id in pb.ships) { const sa = pa.ships[id] || {}, sb = pb.ships[id]; for (const k in sb) if (sa[k] !== sb[k]) out.push({who:name(id), k, a:sa[k] === undefined ? '—' : sa[k], b:sb[k]}); }
   return out;
 }
 
