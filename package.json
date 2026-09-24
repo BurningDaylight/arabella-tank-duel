@@ -1,0 +1,11 @@
+{
+  "name": "arabella-mini-games",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "node tools/melee-bench/bench.mjs",
+    "bench:quick": "node tools/melee-bench/bench.mjs --n 200",
+    "bench:full": "node tools/melee-bench/bench.mjs --n 1000",
+    "test": "node --test tools/"
+  }
+}
