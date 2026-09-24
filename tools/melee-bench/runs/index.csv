@@ -11,3 +11,4 @@ run,date,engine,engine_sha,commit,dirty,ini,ini_version,ini_sha,n,diff,seed,note
 20260924-150712_e2.0.3_default,2026-09-24T15:07:12.503Z,2.0.3,b9dad6923b79,41bc5c7,0,,,,1000,hard,0,"base 2.0.3","leviathan:100 blink:79 hare:72"
 20260924-150725_e2.0.3_balance-v3,2026-09-24T15:07:25.237Z,2.0.3,b9dad6923b79,41bc5c7,0,balance-v3.ini,balance-v3,c18d8f850ff2,1000,hard,0,"","leviathan:97 hare:73 blink:65"
 20260924-151210_e2.0.3_balance-v4,2026-09-24T15:12:10.711Z,2.0.3,b9dad6923b79,41bc5c7,1,balance-v4.ini,balance-v4,4edf97f9126f,1000,hard,0,"","leviathan:90 blink:73 hare:70"
+20260924-153046_e2.0.3_balance-v4,2026-09-24T15:30:46.199Z,2.0.3,b9dad6923b79,e4cde03,0,balance-v4.ini,balance-v4,4edf97f9126f,1000,hard,0,"","leviathan:90 blink:73 hare:70"
