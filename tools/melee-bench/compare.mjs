@@ -87,6 +87,13 @@ export function compareDirs(pa, pb, opts = {}){
 
   const rankA = ids.slice().sort((x, y) => score(A, y) - score(A, x)), rankB = ids.slice().sort((x, y) => score(B, y) - score(B, x));
   const nPair = Math.max(1, ids.length - 1);
+  // timeout share per ship (stored since engine 2.0.3); a jump usually means the AI got stuck, not balance
+  const toOf = (R, id) => { const s = R.ships.find(q => q.id === id); return s && s.stat ? s.stat.to : null; };
+  const toStr = id => {
+    const a = toOf(A, id), b = toOf(B, id); if (a == null && b == null) return '';
+    const f = v => v == null ? '—' : (v * 100).toFixed(0) + '%', s = `таймаут ${f(a)} → ${f(b)}`;
+    return b != null && b > 0.2 ? C.y(s + ' ⚠') : C.d(s);
+  };
   console.log(C.b('\nРейтинг (средний % побед, ничья = ½):'));
   console.log(C.d('   ' + pad('корабль', 11) + pad('было', 8) + pad('стало', 8) + pad('Δ', 9) + 'место'));
   rankB.forEach((id, k) => {
@@ -94,7 +101,7 @@ export function compareDirs(pa, pb, opts = {}){
     const ds = (dl >= 0 ? '+' : '') + (dl * 100).toFixed(1);
     const dc = Math.abs(dl) < nz ? C.d(ds) : dl > 0 ? C.g('▲' + ds) : C.r('▼' + ds);
     const was = rankA.indexOf(id) + 1, mv = was - (k + 1);
-    console.log(`${pad(k + 1 + '.', 3)}${pad(name(id), 11)}${pad((a * 100).toFixed(1) + '%', 8)}${pad((b * 100).toFixed(1) + '%', 8)}${pad(dc, 9)}${mv > 0 ? C.g('↑' + mv) : mv < 0 ? C.r('↓' + -mv) : C.d('=')} ${C.d('(было ' + was + ')')}`);
+    console.log(`${pad(k + 1 + '.', 3)}${pad(name(id), 11)}${pad((a * 100).toFixed(1) + '%', 8)}${pad((b * 100).toFixed(1) + '%', 8)}${pad(dc, 9)}${mv > 0 ? C.g('↑' + mv) : mv < 0 ? C.r('↓' + -mv) : C.d('=')} ${pad(C.d('(было ' + was + ')'), 10)} ${toStr(id)}`);
   });
 
   console.log(C.b('\nСтало (Δ к «было»): % побед строки над столбцом'));

@@ -9,7 +9,7 @@
 
 // Версия движка. Поднимать при любом изменении логики боя, физики или ИИ:
 // мажор — механики несовместимы, минор — новые механики/корабли, патч — исправления. Журнал: CHANGELOG.md.
-const VERSION = '2.0.2';
+const VERSION = '2.0.3';
 
 const WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110, DT = 1 / 120, DEG = Math.PI / 180;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -181,7 +181,9 @@ function createWorld(o){
   const seed = (o.seed >>> 0) || 1;
   const W = {rng:mulberry(seed), seed, phys:Object.assign({}, DEFAULT_PHYS, o.phys || {}), over:o.ships || {},
     planet:o.planet !== false, diff:o.diff || ['normal', 'normal'], time:0, ships:[null, null],
-    shots:[], fighters:[], pods:[], asteroids:[], beams:[], events:[]};
+    shots:[], fighters:[], pods:[], asteroids:[], beams:[], events:[],
+    // per-side damage dealt by source; 'planet' is damage taken; 'steal' is crew stolen by song
+    stats:[{fire:0, spec:0, fighter:0, planet:0, steal:0}, {fire:0, spec:0, fighter:0, planet:0, steal:0}]};
   const na = o.asteroids !== undefined ? o.asteroids : W.phys.asteroids;
   for (let k = 0; k < Math.round(na); k++) W.asteroids.push(newAsteroid(W));
   return W;
@@ -210,7 +212,7 @@ function shoot(W, s, o){
   W.shots.push({x:wrapW(s.x + Math.cos(a) * off), y:wrapW(s.y + Math.sin(a) * off),
     vx:Math.cos(a) * o.speed + (o.inherit ? s.vx : 0), vy:Math.sin(a) * o.speed + (o.inherit ? s.vy : 0),
     a, spd:o.speed, acc:o.acc || 0, vmax:o.vmax || o.speed, homing:o.homing || 0,
-    dmg:o.dmg, life:o.life, max:o.life, r:o.r || 3, kind:o.kind, col:o.col, side:s.side, age:0});
+    dmg:o.dmg, life:o.life, max:o.life, r:o.r || 3, kind:o.kind, col:o.col, side:s.side, age:0, src:o.src || 'fire'});
 }
 function beam(W, x1, y1, x2, y2, col){ W.beams.push({x1, y1, x2, y2, col, t:0.09}); }
 function doFire(W, s){
@@ -237,7 +239,7 @@ function doFire(W, s){
       const e = other(W, s.side); if (!e) return false;
       const d = dist2(e, s); if (d > p.fRange || (e.cloak && d > 90)) return false;
       if (!pay(s, p.fCost)) return false;
-      beam(W, s.x, s.y, e.x, e.y, '#8ff'); damage(W, e, p.fDmg); emit(W, 'sfx', {name:'laser'}); return true;
+      beam(W, s.x, s.y, e.x, e.y, '#8ff'); damage(W, e, p.fDmg, 'fire'); emit(W, 'sfx', {name:'laser'}); return true;
     }
     case 'sting':
       if (!pay(s, p.fCost)) return false;
@@ -266,7 +268,7 @@ function doSpec(W, s){
       beam(W, s.x, s.y, best.x, best.y, '#fff');
       if (kind === 'shot') { W.shots.splice(W.shots.indexOf(best), 1); emit(W, 'sparks', {x:best.x, y:best.y, n:8, col:'#fff'}); }
       else if (kind === 'fighter') { W.fighters.splice(W.fighters.indexOf(best), 1); emit(W, 'boom', {x:best.x, y:best.y, R:14}); }
-      else damage(W, best, p.sDmg);
+      else damage(W, best, p.sDmg, 'spec');
       emit(W, 'sfx', {name:'laser'}); return true;
     }
     case 'leviathan': {
@@ -281,7 +283,7 @@ function doSpec(W, s){
     }
     case 'hare':
       if (!pay(s, p.sCost)) return false;
-      shoot(W, s, {speed:200, acc:300, vmax:p.sSpd, ang:Math.PI, homing:p.homing * DEG, dmg:p.sDmg, life:p.sLife, r:4, kind:'missile', col:'#9f9'});
+      shoot(W, s, {speed:200, acc:300, vmax:p.sSpd, ang:Math.PI, homing:p.homing * DEG, dmg:p.sDmg, life:p.sLife, r:4, kind:'missile', col:'#9f9', src:'spec'});
       emit(W, 'sfx', {name:'shot'}); return true;
     case 'wraith':
       if (s.cloak) { s.cloak = false; return true; }
@@ -300,7 +302,7 @@ function doSpec(W, s){
       if (!e || e.crew <= 1 || dist2(e, s) > p.sRange || !pay(s, p.sCost)) return false;
       const lo = Math.round(p.stealMin), hi = Math.max(lo, Math.round(p.stealMax));
       const steal = Math.min(e.crew - 1, irnd(W, lo, hi));
-      e.crew -= steal;
+      e.crew -= steal; W.stats[s.side].steal += steal;
       for (let k = 0; k < steal; k++) {
         const a = rnd(W, 0, 6.283), sp = rnd(W, 60, 150);
         W.pods.push({x:e.x, y:e.y, vx:Math.cos(a) * sp + e.vx * 0.4, vy:Math.sin(a) * sp + e.vy * 0.4, life:9});
@@ -319,12 +321,15 @@ function glory(W, s){
   emit(W, 'boom', {x:s.x, y:s.y, R:90}); emit(W, 'ring', {x:s.x, y:s.y, col:'#ff8'});
   emit(W, 'shake', {v:20}); emit(W, 'sfx', {name:'nuke'});
   const e = other(W, s.side);
-  if (e) { const d = dist2(e, s); if (d < R) damage(W, e, Math.max(1, Math.round(s.p.gloryDmg * (1 - d / R)))); }
+  if (e) { const d = dist2(e, s); if (d < R) damage(W, e, Math.max(1, Math.round(s.p.gloryDmg * (1 - d / R))), 'spec'); }
   for (let i = W.fighters.length - 1; i >= 0; i--) if (W.fighters[i].side !== s.side && dist2(W.fighters[i], s) < R) W.fighters.splice(i, 1);
   s.crew = 0; shipDie(W, s, true);
 }
-function damage(W, s, dmg){
+function damage(W, s, dmg, src){
   if (!s || !s.alive || s.inv > 0 || dmg <= 0) return;
+  // bench accounting: credited to the opponent by source; planet hits are counted as taken by the victim
+  const st = src === 'planet' ? W.stats[s.side] : W.stats[1 - s.side];
+  if (src && st) st[src] = (st[src] || 0) + Math.min(dmg, s.crew);
   s.crew -= dmg;
   emit(W, 'sparks', {x:s.x, y:s.y, n:5, col:'#fff'});
   if (s.crew <= 0) { s.crew = 0; shipDie(W, s); }
@@ -379,7 +384,7 @@ function updateShip(W, s, c, dt){
       s.x = wrapW(PX + nx * (PR + d.r + 0.5)); s.y = wrapW(PY + ny * (PR + d.r + 0.5));
       const vn = s.vx * nx + s.vy * ny;
       if (vn < 0) { s.vx -= 1.8 * vn * nx; s.vy -= 1.8 * vn * ny; }
-      if (s.hitCd <= 0) { s.hitCd = 0.5; damage(W, s, ph.planetDmg); emit(W, 'sfx', {name:'dirt'}); }
+      if (s.hitCd <= 0) { s.hitCd = 0.5; damage(W, s, ph.planetDmg, 'planet'); emit(W, 'sfx', {name:'dirt'}); }
     }
   }
   if (d.id !== 'blink') {
@@ -426,7 +431,7 @@ function updateWorld(W, dt){
     let dead = sh.life <= 0;
     const e = other(W, sh.side);
     if (!dead && e && dist2(sh, e) < e.def.r + sh.r) {
-      damage(W, e, sh.dmg); dead = true;
+      damage(W, e, sh.dmg, sh.src); dead = true;
       if (sh.kind === 'nuke' || sh.kind === 'missile') { emit(W, 'boom', {x:sh.x, y:sh.y, R:26}); emit(W, 'sfx', {name:'boom'}); }
     }
     if (!dead) for (let j = W.fighters.length - 1; j >= 0; j--) {
@@ -453,7 +458,7 @@ function updateWorld(W, dt){
     if (!back && d < 110) des += Math.PI / 2;
     f.a += clamp(angDiff(des, f.a), -5 * dt, 5 * dt);
     f.x = wrapW(f.x + Math.cos(f.a) * 300 * dt); f.y = wrapW(f.y + Math.sin(f.a) * 300 * dt);
-    if (!back && d < 150 && f.cd <= 0) { f.cd = 0.45; beam(W, f.x, f.y, e.x, e.y, '#f88'); damage(W, e, f.dmg); }
+    if (!back && d < 150 && f.cd <= 0) { f.cd = 0.45; beam(W, f.x, f.y, e.x, e.y, '#f88'); damage(W, e, f.dmg, 'fighter'); }
     if (back && d < mom.def.r + 6) { mom.crew = Math.min(mom.p.crewMax, mom.crew + 1); drop(); }
   }
   for (let i = W.pods.length - 1; i >= 0; i--) {
@@ -508,7 +513,8 @@ function aiThink(W, s, e, dt){
   const aimA = Math.atan2(dy + (st.lvy - s.vy) * tl, dx + (st.lvx - s.vx) * tl);
   let desA = aimA, thrust = false;
   if (id === 'hare' && eAlive && dist < 460) { desA = angE + Math.PI; thrust = dist < 330; }
-  else if (dist > pref * 1.15 + 40) thrust = Math.abs(angDiff(desA, s.a)) < 0.7;
+  // approach until inside both the preferred distance and the real weapon range (never park out of range)
+  else if (dist > Math.min(pref * 1.15 + 40, frange * 0.95)) thrust = Math.abs(angDiff(desA, s.a)) < 0.7;
   else if (pref > 150 && dist < pref * 0.6) { desA = angE + Math.PI * 0.6; thrust = true; }
   if (id === 'siren' && W.pods.length) {
     let best = null, bd = 500;

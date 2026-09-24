@@ -5,3 +5,6 @@ run,date,engine,engine_sha,commit,dirty,ini,ini_version,ini_sha,n,diff,seed,note
 20260924-145838_e2.0.1_default,2026-09-24T14:58:38.881Z,2.0.1,fc8cf6dd67f4,a17cbef,0,,,,1000,hard,0,"база 2.0.2","leviathan:100 blink:82 hare:72"
 20260924-145851_e2.0.1_balance-v2,2026-09-24T14:58:51.981Z,2.0.1,fc8cf6dd67f4,a17cbef,0,balance-v2.ini,balance-v2,f2350b7a86f1,1000,hard,0,"","leviathan:95 hare:75 blink:69"
 20260924-145911_e2.0.1_balance-v3,2026-09-24T14:59:11.405Z,2.0.1,fc8cf6dd67f4,a17cbef,0,balance-v3.ini,balance-v3,c18d8f850ff2,1000,hard,0,"","leviathan:98 hare:74 blink:69"
+20260924-150237_e2.0.2_default,2026-09-24T15:02:37.179Z,2.0.2,a929e16c5c2f,3b9a5d1,0,,,,1000,hard,0,"база 2.0.2","leviathan:100 blink:81 hare:72"
+20260924-150248_e2.0.2_balance-v2,2026-09-24T15:02:48.838Z,2.0.2,a929e16c5c2f,3b9a5d1,0,balance-v2.ini,balance-v2,f2350b7a86f1,1000,hard,0,"","leviathan:89 hare:73 blink:66"
+20260924-150305_e2.0.2_balance-v3,2026-09-24T15:03:05.931Z,2.0.2,a929e16c5c2f,3b9a5d1,0,balance-v3.ini,balance-v3,c18d8f850ff2,1000,hard,0,"","leviathan:97 hare:72 blink:62"

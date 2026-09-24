@@ -26,26 +26,30 @@ function runMatch(i, j, seed, opt){
   if (seed & 2) { E.spawn(W, A, i); E.spawn(W, B, j); } else { E.spawn(W, B, j); E.spawn(W, A, i); }
   const sa = W.ships[A], sb = W.ships[B];              // честный старт: оба смотрят друг на друга
   sa.a = Math.atan2(E.wd(sb.y, sa.y), E.wd(sb.x, sa.x)); sb.a = Math.atan2(E.wd(sa.y, sb.y), E.wd(sa.x, sb.x));
+  // attach per-side damage stats (engine >= 2.0.3; empty for older engines)
+  const fin = r => Object.assign(r, {sa:(W.stats && W.stats[A]) || {}, sb:(W.stats && W.stats[B]) || {}});
   const steps = Math.round(opt.time / E.DT);
   for (let k = 0; k < steps; k++) {
     E.step(W, null); W.events.length = 0;
     const a = W.ships[A], b = W.ships[B];
     if (!a.alive || !b.alive) {
-      if (!a.alive && !b.alive) return {w:-1, t:W.time, mutual:true};
-      return a.alive ? {w:0, t:W.time, crew:a.crew / a.p.crewMax} : {w:1, t:W.time, crew:b.crew / b.p.crewMax};
+      if (!a.alive && !b.alive) return fin({w:-1, t:W.time, mutual:true});
+      return fin(a.alive ? {w:0, t:W.time, crew:a.crew / a.p.crewMax} : {w:1, t:W.time, crew:b.crew / b.p.crewMax});
     }
   }
-  return {w:-1, t:opt.time, timeout:true};
+  return fin({w:-1, t:opt.time, timeout:true});
 }
 function seedOf(i, j, k, base){ return (((i + 1) * 73856093) ^ ((j + 1) * 19349663) ^ ((k + 1 + (base || 0) * 1000003) * 83492791)) >>> 0 || 1; }
 
 if (!isMainThread) {
   const {jobs, opt} = workerData;
   for (const [i, j] of jobs) {
-    const r = {i, j, wi:0, wj:0, draw:0, mutual:0, timeout:0, tSum:0, crewI:0, crewJ:0};
+    const r = {i, j, wi:0, wj:0, draw:0, mutual:0, timeout:0, tSum:0, crewI:0, crewJ:0, si:{}, sj:{}};
     for (let k = 0; k < opt.n; k++) {
       const m = runMatch(i, j, seedOf(i, j, k, opt.seed), opt);
       r.tSum += m.t;
+      for (const k in m.sa) r.si[k] = (r.si[k] || 0) + m.sa[k];
+      for (const k in m.sb) r.sj[k] = (r.sj[k] || 0) + m.sb[k];
       if (m.w === 0) { r.wi++; r.crewI += m.crew; }
       else if (m.w === 1) { r.wj++; r.crewJ += m.crew; }
       else { r.draw++; if (m.timeout) r.timeout++; if (m.mutual) r.mutual++; }
@@ -137,10 +141,11 @@ function finish(a, ids, res, t0, meta){
   console.log(`\nГотово за ${secs.toFixed(1)} с\n`);
   const n = a.n, name = i => E.SHIPS[i].name, M = {};
   const cell = (i, j) => M[i + ',' + j];
+  const per = o => Object.fromEntries(Object.entries(o || {}).map(([k, v]) => [k, v / n]));
   for (const r of res) {
     const base = {draw:r.draw / n, mutual:r.mutual / n, timeout:r.timeout / n, t:r.tSum / n};
-    M[r.i + ',' + r.j] = Object.assign({win:r.wi / n, lose:r.wj / n, crew:r.wi ? r.crewI / r.wi : 0}, base);
-    if (r.i !== r.j) M[r.j + ',' + r.i] = Object.assign({win:r.wj / n, lose:r.wi / n, crew:r.wj ? r.crewJ / r.wj : 0}, base);
+    M[r.i + ',' + r.j] = Object.assign({win:r.wi / n, lose:r.wj / n, crew:r.wi ? r.crewI / r.wi : 0, dmg:per(r.si)}, base);
+    if (r.i !== r.j) M[r.j + ',' + r.i] = Object.assign({win:r.wj / n, lose:r.wi / n, crew:r.wj ? r.crewJ / r.wj : 0, dmg:per(r.sj)}, base);
   }
   const score = i => { const o = ids.filter(j => j !== i); if (!o.length) return 0.5; return o.reduce((s, j) => s + cell(i, j).win + cell(i, j).draw * 0.5, 0) / o.length; };
   const rank = ids.slice().sort((x, y) => score(y) - score(x));
@@ -148,15 +153,29 @@ function finish(a, ids, res, t0, meta){
   console.log('Процент побед строки над столбцом (ничьи отдельно):\n');
   console.log(pad('', 11) + ids.map(j => pad(name(j).slice(0, 7), 8)).join(''));
   for (const i of ids) console.log(pad(name(i), 11) + ids.map(j => pad((cell(i, j).win * 100).toFixed(0) + '%', 8)).join(''));
-  console.log('\nРейтинг (средний % побед, ничья = пол-победы):');
-  rank.forEach((i, k) => console.log(`  ${k + 1}. ${pad(name(i), 10)} ${(score(i) * 100).toFixed(1)}%`));
+  // per-ship summary over non-mirror opponents: timeouts, fight length, damage per match by source
+  const KINDS = ['fire', 'spec', 'fighter', 'planet', 'steal'];
+  const shipStat = i => {
+    const o = ids.filter(j => j !== i), s = {to:0, t:0, fire:0, spec:0, fighter:0, planet:0, steal:0};
+    for (const j of o) { const c = cell(i, j); s.to += c.timeout; s.t += c.t; for (const k of KINDS) s[k] += (c.dmg && c.dmg[k]) || 0; }
+    for (const k in s) s[k] /= Math.max(1, o.length);
+    return s;
+  };
+  console.log('\nРейтинг (ничья = пол-победы), таймауты, длина боя и урон за бой по источникам:');
+  console.log('     ' + pad('корабль', 11) + pad('рейтинг', 9) + pad('таймаут', 9) + pad('бой,с', 7) + pad('оружие', 8) + pad('спец', 7) + pad('истреб', 8) + pad('планета', 9) + 'украл');
+  rank.forEach((i, k) => {
+    const s = shipStat(i), f = v => v.toFixed(1);
+    console.log(`  ${pad(k + 1 + '.', 3)}${pad(name(i), 11)}${pad((score(i) * 100).toFixed(1) + '%', 9)}${pad((s.to * 100).toFixed(0) + '%' + (s.to > 0.2 ? ' ⚠' : ''), 9)}${pad(f(s.t), 7)}${pad(f(s.fire), 8)}${pad(f(s.spec), 7)}${pad(f(s.fighter), 8)}${pad(f(s.planet), 9)}${f(s.steal)}`);
+  });
+  const stuck = rank.filter(i => shipStat(i).to > 0.2).map(name);
+  if (stuck.length) console.log(`  ⚠ много таймаутов (>20%): ${stuck.join(', ')} — скорее всего, ИИ не может сблизиться или достать, а не баланс`);
   let mw = 0, mwName = '';
   for (const i of ids) { const c = cell(i, i); if (c && Math.abs(c.win - c.lose) > mw) { mw = Math.abs(c.win - c.lose); mwName = name(i); } }
   console.log(`\nПроверка зеркал: макс. перекос сторон — ${(mw * 100).toFixed(0)}%${mwName ? ' (' + mwName + ')' : ''}`);
 
   mkdirSync(a.out, {recursive:true});
   const args = {n:a.n, time:a.time, diff:a.diff, ini:a.ini, planet:a.planet, seed:a.seed, ships:a.ships, workers:a.workers};
-  const data = {meta, date:meta.date, args, seconds:secs, ships:ids.map(i => ({i, id:E.SHIPS[i].id, name:name(i), score:score(i)})), matrix:M};
+  const data = {meta, date:meta.date, args, seconds:secs, ships:ids.map(i => ({i, id:E.SHIPS[i].id, name:name(i), score:score(i), stat:shipStat(i)})), matrix:M};
   writeFileSync(join(a.out, 'results.json'), JSON.stringify(data, null, 1));
   const csv = ['A,B,win,lose,draw,mutual,timeout,avg_time,avg_crew_left'];
   for (const i of ids) for (const j of ids) { const c = cell(i, j); csv.push([E.SHIPS[i].id, E.SHIPS[j].id, c.win.toFixed(3), c.lose.toFixed(3), c.draw.toFixed(3), c.mutual.toFixed(3), c.timeout.toFixed(3), c.t.toFixed(1), c.crew.toFixed(2)].join(',')); }

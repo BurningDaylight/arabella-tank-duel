@@ -4,6 +4,12 @@
 боя, физики или ИИ (мажор — механики несовместимы, минор — новые механики и корабли,
 патч — исправления). Стенд дополнительно хранит хеш файла движка и коммит.
 
+## 2.0.3
+- AI never parks outside its own weapon range: approach distance is capped by the actual weapon range
+  (2.0.2 still let Blink hover at ~205 with a 180 laser, producing timeouts).
+- Per-source damage accounting in `W.stats` (fire / spec / fighter / planet taken / crew stolen) for the bench.
+  No gameplay change.
+
 ## 2.0.2
 - ИИ берёт дальность оружия и любимую дистанцию из текущих параметров
   (раньше были зашиты: урезанная в INI дальность Блинка приводила к ничьим по таймауту).
