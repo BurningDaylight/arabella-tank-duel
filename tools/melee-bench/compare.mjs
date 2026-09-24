@@ -41,7 +41,7 @@ function metaLine(R){
   const m = R.meta;
   if (!m) return `без сведений о версиях (старый прогон) · n=${R.n} · ИИ ${R.d.args.diff}${R.d.args.ini ? ' · ' + R.d.args.ini : ''}`;
   const ini = m.ini ? `${m.ini.file}${m.ini.meta.version ? ' «' + m.ini.meta.version + '»' : ''} (${m.ini.sha})` : 'по умолчанию';
-  return `${m.date.slice(0, 16).replace('T', ' ')} · движок v${m.engine} (${m.engineSha}) · git ${m.git.commit || '—'}${m.git.dirty ? '+правки' : ''} · INI ${ini} · n=${R.n} · ИИ ${R.d.args.diff} · сиды ${R.d.args.seed || 0}`;
+  return `${m.date.slice(0, 16).replace('T', ' ')} · движок v${m.engine} (${m.engineSha}) · git ${m.git.commit || '—'}${m.git.dirty ? '+правки' : ''} · INI ${ini} · n=${R.n} · ИИ ${R.d.args.diff}/${R.d.args.ai || 'rule'} · сиды ${R.d.args.seed || 0}`;
 }
 function warnings(A, B){
   const w = [], a = A.meta, b = B.meta;
@@ -55,6 +55,7 @@ function warnings(A, B){
       w.push('одинаковые код, настройки, сиды и n — результаты должны совпасть один в один');
   }
   if (A.d.args.diff !== B.d.args.diff) w.push(`разный уровень ИИ: ${A.d.args.diff} → ${B.d.args.diff}`);
+  if ((A.d.args.ai || 'rule') !== (B.d.args.ai || 'rule')) w.push(`разный пилот ИИ: ${A.d.args.ai || 'rule'} → ${B.d.args.ai || 'rule'}`);
   return w;
 }
 function paramChanges(A, B, name){

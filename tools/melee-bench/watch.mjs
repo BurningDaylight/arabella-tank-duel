@@ -57,7 +57,7 @@ const iniRel = args.ini ? relative(join(ROOT, 'app'), resolve(ROOT, args.ini)).s
 const base = `http://localhost:${port}/app/starship-duel.html`;
 const url = (k, e) => {
   const q = new URLSearchParams({a:E.SHIPS[ia].id, b:E.SHIPS[ib].id, seed:String(e.seed), diff:args.diff || 'hard',
-    time:String(args.time || 90), planet:args.planet === false ? '0' : '1', expect:k + ':' + e.t});
+    time:String(args.time || 90), planet:args.planet === false ? '0' : '1', ai:args.ai || 'rule', expect:k + ':' + e.t});
   if (iniRel) q.set('ini', iniRel);
   if (m.ini && m.ini.sha) q.set('ish', m.ini.sha);
   if (m.engine) q.set('ev', m.engine);

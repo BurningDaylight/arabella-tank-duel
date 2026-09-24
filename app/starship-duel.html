@@ -157,11 +157,12 @@ const SW = 960, SH = 540, ZOOMS = [1.1, 0.75, 0.5, 0.32];
 const OPTS = [
   {k:'mode', label:'Режим', opts:[['ai','Против робота'],['pvp','Двое на одном устройстве']]},
   {k:'diff', label:'Сложность робота', opts:[['easy','Легко'],['normal','Средне'],['hard','Сложно']]},
+  {k:'pilot', label:'Пилот робота', opts:[['rule','Правила (быстрый)'],['planner','Планировщик (умнее)']]},
   {k:'fleet', label:'Кораблей во флоте', opts:[['3','3'],['5','5'],['8','Все 8']]},
   {k:'planet', label:'Планета', opts:[['on','Есть'],['off','Нет']]},
   {k:'sound', label:'Звук', opts:[['on','Вкл'],['off','Выкл']]},
 ];
-const DEFAULT_GAME = {mode:'ai', diff:'normal', fleet:'5', planet:'on', sound:'on'};
+const DEFAULT_GAME = {mode:'ai', diff:'normal', pilot:'rule', fleet:'5', planet:'on', sound:'on'};
 const KEY = 'melee_cfg_v2';
 const store = (() => { try { const s = window.localStorage; s.setItem('__t','1'); s.removeItem('__t'); return s; } catch (_) { return null; } })();
 function freshCfg(){ return Object.assign({}, DEFAULT_GAME, {phys:Object.assign({}, DEFAULT_PHYS), ships:{}}); }
@@ -284,7 +285,7 @@ function handleEvents(){
 // ================= ХОД ИГРЫ =================
 function pickFleet(n){ const idx = SHIPS.map((_, i) => i); for (let i = idx.length - 1; i > 0; i--) { const j = irnd(0, i); [idx[i], idx[j]] = [idx[j], idx[i]]; } return idx.slice(0, n).sort((a, b) => a - b); }
 function startMatch(){
-  W = E.createWorld({seed:(Math.random() * 4294967296) >>> 0, phys:cfg.phys, ships:cfg.ships, planet:cfg.planet === 'on', diff:[cfg.diff, cfg.diff]});
+  W = E.createWorld({seed:(Math.random() * 4294967296) >>> 0, phys:cfg.phys, ships:cfg.ships, planet:cfg.planet === 'on', diff:[cfg.diff, cfg.diff], ai:[null, cfg.pilot]});
   sides = [0, 1].map(i => ({i, ai:i === 1 && cfg.mode === 'ai', label:cfg.mode === 'ai' ? (i ? 'Робот' : 'Вы') : (i ? 'Красные' : 'Синие'),
     color:i ? '#ff5a4a' : '#3fa9ff', fleet:pickFleet(+cfg.fleet), used:[], ship:null, kills:0}));
   particles = []; bubbles = []; msgs = []; time = 0; shake = 0;
@@ -615,7 +616,7 @@ function watchInit(){
   if (ia < 0 || ib < 0) { showErr('Режим зрителя: неизвестный корабль в a= или b='); return; }
   const seed = (Number(q.get('seed')) >>> 0) || ((Math.random() * 4294967296) >>> 0);
   WATCH = {ia:ia, ib:ib, seed:seed, diff:q.get('diff') || 'hard', time:Number(q.get('time')) || 90,
-    planet:q.get('planet') !== '0', ini:q.get('ini'), ish:q.get('ish'), ev:q.get('ev'), expect:q.get('expect'),
+    planet:q.get('planet') !== '0', ini:q.get('ini'), ish:q.get('ish'), ev:q.get('ev'), expect:q.get('expect'), ai:q.get('ai') || 'rule',
     si:3, speed:1, paused:false, done:false, set:null, note:'', result:null};
   menuOpen = false; state = 'watch';
   $('menu').classList.remove('show'); $('menuBtn').style.display = 'none'; $('watchBar').style.display = 'flex';
@@ -637,7 +638,7 @@ function watchSetIni(txt){
 }
 function watchStart(){
   const S = WATCH.set, seed = WATCH.seed, A = seed & 1, B = 1 - A;
-  W = E.createWorld({seed:seed, phys:S.phys, ships:S.ships, planet:WATCH.planet, diff:[WATCH.diff, WATCH.diff]});
+  W = E.createWorld({seed:seed, phys:S.phys, ships:S.ships, planet:WATCH.planet, diff:[WATCH.diff, WATCH.diff], ai:[WATCH.ai, WATCH.ai]});
   sides = [0, 1].map(i => ({i:i, ai:true, label:i === A ? 'A' : 'B', color:i === A ? '#3fa9ff' : '#ff5a4a', fleet:[], used:[], ship:null, kills:0}));
   if (seed & 2) { E.spawn(W, A, WATCH.ia); E.spawn(W, B, WATCH.ib); } else { E.spawn(W, B, WATCH.ib); E.spawn(W, A, WATCH.ia); }
   const sa = W.ships[A], sb = W.ships[B];
@@ -670,7 +671,7 @@ function watchInfo(){
   if (!WATCH) return;
   const na = SHIPS[WATCH.ia].name, nb = SHIPS[WATCH.ib].name;
   const txt = r => r.w === 'a' ? 'победил A (' + na + ')' : r.w === 'b' ? 'победил B (' + nb + ')' : r.w === 'mutual' ? 'взаимное уничтожение' : 'таймаут';
-  $('wTitle').textContent = 'A: ' + na + ' × B: ' + nb + ' · сид ' + WATCH.seed + ' · ИИ ' + WATCH.diff + (WATCH.ini ? ' · ' + WATCH.ini.split('/').pop() : '');
+  $('wTitle').textContent = 'A: ' + na + ' × B: ' + nb + ' · сид ' + WATCH.seed + ' · ИИ ' + WATCH.diff + '/' + WATCH.ai + (WATCH.ini ? ' · ' + WATCH.ini.split('/').pop() : '');
   $('wPlay').textContent = WATCH.paused ? '▶' : '⏸';
   $('wSpeed').textContent = WATCH.paused ? 'пауза' : '×' + SPEEDS[WATCH.si];
   $('wTime').textContent = W ? W.time.toFixed(1) + ' / ' + WATCH.time + ' с' : '';

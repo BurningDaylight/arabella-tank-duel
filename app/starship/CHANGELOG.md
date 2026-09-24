@@ -4,6 +4,12 @@
 боя, физики или ИИ (мажор — механики несовместимы, минор — новые механики и корабли,
 патч — исправления). Стенд дополнительно хранит хеш файла движка и коммит.
 
+## 2.3.0
+- Planner AI: every 0.3 s tries 10 manoeuvres on cloned worlds for 1.2 s and picks the best by crew exchange.
+  Opt-in per side: `createWorld({ai:['planner', 'rule']})`; the rule AI stays the default.
+- World RNG state moved to `W.rs` (same mulberry32 sequence: rule-AI results are unchanged), `cloneWorld()`,
+  quiet worlds emit no events.
+
 ## 2.2.0
 - Wraith cloak rework: while cloaked the ship is immune to all weapons (shots pass through; Blink laser, Siren song,
   fighters and Sting glory do nothing); the planet still hurts.

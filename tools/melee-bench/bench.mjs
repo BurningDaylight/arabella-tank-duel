@@ -21,7 +21,7 @@ const E = require(ENGINE);
 const sha = s => createHash('sha256').update(s).digest('hex').slice(0, 12);
 
 function runMatch(i, j, seed, opt){
-  const W = E.createWorld({seed, phys:opt.phys, ships:opt.ships, planet:opt.planet, diff:[opt.diff, opt.diff]});
+  const W = E.createWorld({seed, phys:opt.phys, ships:opt.ships, planet:opt.planet, diff:[opt.diff, opt.diff], ai:[opt.ai, opt.ai]});
   const A = seed & 1, B = 1 - A;                       // стороны чередуются
   if (seed & 2) { E.spawn(W, A, i); E.spawn(W, B, j); } else { E.spawn(W, B, j); E.spawn(W, A, i); }
   const sa = W.ships[A], sb = W.ships[B];              // честный старт: оба смотрят друг на друга
@@ -63,7 +63,7 @@ if (!isMainThread) {
 } else main();
 
 function parseArgs(){
-  const a = {n:200, time:90, diff:'hard', ini:null, out:null, workers:Math.max(1, cpus().length - 1), planet:true, ships:null, seed:0, compare:null, note:''};
+  const a = {n:200, time:90, diff:'hard', ini:null, out:null, workers:Math.max(1, cpus().length - 1), planet:true, ships:null, seed:0, compare:null, note:'', ai:'rule'};
   const v = process.argv.slice(2);
   for (let i = 0; i < v.length; i++) {
     const k = v[i], nx = () => v[++i];
@@ -78,6 +78,7 @@ function parseArgs(){
     else if (k === '--seed') a.seed = +nx();
     else if (k === '--compare') a.compare = nx();
     else if (k === '--note') a.note = nx();
+    else if (k === '--ai') a.ai = nx();
     else if (k === '-h' || k === '--help') {
       console.log('Опции: --n 200 --time 90 --diff easy|normal|hard --ini набор.ini --ships id1,id2 --no-planet --seed 0 --workers N --out папка --compare prev|latest|папка --note "текст"');
       console.log('Корабли: ' + E.SHIPS.map(d => d.id + ' (' + d.name + ')').join(', '));
@@ -97,7 +98,7 @@ function gitInfo(){
 }
 function main(){
   const a = parseArgs();
-  const opt = {n:a.n, time:a.time, diff:a.diff, phys:{}, ships:{}, planet:a.planet, seed:a.seed};
+  const opt = {n:a.n, time:a.time, diff:a.diff, phys:{}, ships:{}, planet:a.planet, seed:a.seed, ai:a.ai};
   let ini = null;
   if (a.ini) {
     let txt; try { txt = readFileSync(a.ini, 'utf8'); } catch (_) { console.error(`Нет файла настроек: ${a.ini}`); process.exit(1); }
@@ -112,7 +113,7 @@ function main(){
   if (!a.out) {
     const st = meta.date.replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
     const tag = (ini && ((ini.meta && ini.meta.version) || ini.file.replace(/\.[^.]+$/, ''))) || 'default';
-    a.out = join(RUNS, `${st}_e${meta.engine}_${tag.replace(/[^\w.-]+/g, '_')}`);
+    a.out = join(RUNS, `${st}_e${meta.engine}_${tag.replace(/[^\w.-]+/g, '_')}${a.ai !== 'rule' ? '_' + a.ai : ''}`);
   }
   console.log(`Движок v${meta.engine} (${meta.engineSha}) · git ${meta.git.commit || '—'}${meta.git.dirty ? ' + незакоммиченные правки: ' + meta.git.dirtyFiles.join(', ') : ''}`);
   if (ini) {
@@ -126,7 +127,7 @@ function main(){
   const per = Math.max(1, a.workers), buckets = Array.from({length:per}, () => []);
   jobs.forEach((jb, k) => buckets[k % per].push(jb));
   const total = jobs.length; let got = 0, alive = 0; const res = [], t0 = Date.now();
-  console.log(`Кораблей: ${ids.length}, пар: ${total}, матчей на пару: ${a.n}, потоков: ${per}, ИИ: ${a.diff}, лимит: ${a.time} с, сиды: серия ${a.seed}`);
+  console.log(`Кораблей: ${ids.length}, пар: ${total}, матчей на пару: ${a.n}, потоков: ${per}, ИИ: ${a.diff}/${a.ai}, лимит: ${a.time} с, сиды: серия ${a.seed}`);
   for (const b of buckets) {
     if (!b.length) continue;
     alive++;
@@ -179,7 +180,7 @@ function finish(a, ids, res, t0, meta){
   // replayable examples per pair, keyed 'idI,idJ' with i <= j in ship order
   const examples = Object.fromEntries(res.map(r => [E.SHIPS[r.i].id + ',' + E.SHIPS[r.j].id, r.ex || {}]));
   mkdirSync(a.out, {recursive:true});
-  const args = {n:a.n, time:a.time, diff:a.diff, ini:a.ini, planet:a.planet, seed:a.seed, ships:a.ships, workers:a.workers};
+  const args = {n:a.n, time:a.time, diff:a.diff, ini:a.ini, planet:a.planet, seed:a.seed, ships:a.ships, workers:a.workers, ai:a.ai};
   const data = {meta, date:meta.date, args, seconds:secs, ships:ids.map(i => ({i, id:E.SHIPS[i].id, name:name(i), score:score(i), stat:shipStat(i)})), matrix:M, examples};
   writeFileSync(join(a.out, 'results.json'), JSON.stringify(data, null, 1));
   const csv = ['A,B,win,lose,draw,mutual,timeout,avg_time,avg_crew_left'];
