@@ -142,7 +142,8 @@ function main(){
 }
 function finish(a, ids, res, t0, meta){
   const secs = (Date.now() - t0) / 1000;
-  console.log(`\nГотово за ${secs.toFixed(1)} с\n`);
+  const cpu = process.cpuUsage(), cpuS = (cpu.user + cpu.system) / 1e6;   // whole process, worker threads included
+  console.log(`\nГотово за ${secs.toFixed(1)} с · процессор ${cpuS.toFixed(0)} с (≈${(cpuS / Math.max(0.1, secs)).toFixed(1)} ядер)\n`);
   const n = a.n, name = i => E.SHIPS[i].name, M = {};
   const cell = (i, j) => M[i + ',' + j];
   const per = o => Object.fromEntries(Object.entries(o || {}).map(([k, v]) => [k, v / n]));
