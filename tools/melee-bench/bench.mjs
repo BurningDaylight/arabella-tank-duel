@@ -194,7 +194,8 @@ function finish(a, ids, res, t0, meta){
   if (stuck.length) console.log(`  ⚠ много таймаутов (>20%): ${stuck.join(', ')} — скорее всего, ИИ не может сблизиться или достать, а не баланс`);
   let mw = 0, mwName = '';
   for (const i of ids) { const c = cell(i, i); if (c && Math.abs(c.win - c.lose) > mw) { mw = Math.abs(c.win - c.lose); mwName = name(i); } }
-  console.log(`\nПроверка зеркал: макс. перекос сторон — ${(mw * 100).toFixed(0)}%${mwName ? ' (' + mwName + ')' : ''}`);
+  // max over 8 mirrors of a win-minus-loss difference: pure noise gives about 2 / sqrt(n)
+  console.log(`\nПроверка зеркал: макс. перекос сторон — ${(mw * 100).toFixed(0)}%${mwName ? ' (' + mwName + ')' : ''} · ожидаемый шум при n=${n} ≈ ${(200 / Math.sqrt(n)).toFixed(0)}%`);
 
   // replayable examples per pair, keyed 'idI,idJ' with i <= j in ship order
   const examples = Object.fromEntries(res.map(r => [E.SHIPS[r.i].id + ',' + E.SHIPS[r.j].id, r.ex || {}]));
