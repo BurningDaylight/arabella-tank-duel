@@ -42,10 +42,13 @@ function runMatch(i, j, seed, opt){
 function seedOf(i, j, k, base){ return (((i + 1) * 73856093) ^ ((j + 1) * 19349663) ^ ((k + 1 + (base || 0) * 1000003) * 83492791)) >>> 0 || 1; }
 
 if (!isMainThread) {
-  const {jobs, opt} = workerData;
-  for (const [i, j] of jobs) {
-    const r = {i, j, wi:0, wj:0, draw:0, mutual:0, timeout:0, tSum:0, crewI:0, crewJ:0, si:{}, sj:{}, ex:{i:[], j:[], mutual:[], timeout:[]}};
-    for (let k = 0; k < opt.n; k++) {
+  // dynamic queue: the main thread hands out chunks (pair + seed range) as threads become free
+  const {opt} = workerData;
+  parentPort.on('message', job => {
+    if (!job) process.exit(0);
+    const [i, j, k0, k1] = job;
+    const r = {i, j, k0, wi:0, wj:0, draw:0, mutual:0, timeout:0, tSum:0, crewI:0, crewJ:0, si:{}, sj:{}, ex:{i:[], j:[], mutual:[], timeout:[]}};
+    for (let k = k0; k < k1; k++) {
       const seed = seedOf(i, j, k, opt.seed), m = runMatch(i, j, seed, opt);
       // keep a few replayable examples of every outcome for watch mode (watch.mjs)
       const kind = m.w === 0 ? 'i' : m.w === 1 ? 'j' : m.timeout ? 'timeout' : 'mutual';
@@ -58,8 +61,8 @@ if (!isMainThread) {
       else { r.draw++; if (m.timeout) r.timeout++; if (m.mutual) r.mutual++; }
     }
     parentPort.postMessage(r);
-  }
-  parentPort.postMessage({done:true});
+  });
+  parentPort.postMessage({ready:true});
 } else main();
 
 function parseArgs(){
@@ -124,21 +127,36 @@ function main(){
   if (a.ships) ids = a.ships.map(s => E.SHIPS.findIndex(d => d.id === s)).filter(i => i >= 0);
   const jobs = [];
   for (const i of ids) for (const j of ids) if (i <= j) jobs.push([i, j]);
-  const per = Math.max(1, a.workers), buckets = Array.from({length:per}, () => []);
-  jobs.forEach((jb, k) => buckets[k % per].push(jb));
-  const total = jobs.length; let got = 0, alive = 0; const res = [], t0 = Date.now();
+  // split every pair into seed chunks so threads stay busy until the end
+  const chunk = Math.max(5, Math.ceil(a.n / 5)), queue = [], parts = {};
+  for (const [i, j] of jobs) for (let k0 = 0; k0 < a.n; k0 += chunk) queue.push([i, j, k0, Math.min(a.n, k0 + chunk)]);
+  const per = Math.max(1, Math.min(a.workers, queue.length));
+  const total = jobs.length; let got = 0; const res = [], t0 = Date.now();
   console.log(`Кораблей: ${ids.length}, пар: ${total}, матчей на пару: ${a.n}, потоков: ${per}, ИИ: ${a.diff}/${a.ai}, лимит: ${a.time} с, сиды: серия ${a.seed}`);
-  for (const b of buckets) {
-    if (!b.length) continue;
-    alive++;
-    const w = new Worker(fileURLToPath(import.meta.url), {workerData:{jobs:b, opt}});
+  for (let t = 0; t < per; t++) {
+    const w = new Worker(fileURLToPath(import.meta.url), {workerData:{opt}});
     w.on('message', m => {
-      if (m.done) { if (--alive === 0) finish(a, ids, res, t0, meta); return; }
-      res.push(m); got++;
+      w.postMessage(queue.length ? queue.shift() : null);
+      if (m.ready) return;
+      const key = m.i + ',' + m.j; (parts[key] = parts[key] || []).push(m);
+      if (parts[key].length < Math.ceil(a.n / chunk)) return;
+      res.push(mergeParts(parts[key])); got++;
+      if (got === total) { finish(a, ids, res, t0, meta); return; }
       process.stdout.write(`\r  пар готово: ${got}/${total}  (${((Date.now() - t0) / 1000).toFixed(0)} с)`);
     });
     w.on('error', e => { console.error('\nОшибка потока:', e); process.exit(1); });
   }
+}
+// merge seed-chunk results of one pair in seed order (keeps sums and examples deterministic)
+function mergeParts(parts){
+  parts.sort((x, y) => x.k0 - y.k0);
+  const r = {i:parts[0].i, j:parts[0].j, wi:0, wj:0, draw:0, mutual:0, timeout:0, tSum:0, crewI:0, crewJ:0, si:{}, sj:{}, ex:{i:[], j:[], mutual:[], timeout:[]}};
+  for (const q of parts) {
+    for (const k of ['wi', 'wj', 'draw', 'mutual', 'timeout', 'tSum', 'crewI', 'crewJ']) r[k] += q[k];
+    for (const s of ['si', 'sj']) for (const k in q[s]) r[s][k] = (r[s][k] || 0) + q[s][k];
+    for (const k in r.ex) r.ex[k] = r.ex[k].concat(q.ex[k] || []).slice(0, 5);
+  }
+  return r;
 }
 function finish(a, ids, res, t0, meta){
   const secs = (Date.now() - t0) / 1000;
