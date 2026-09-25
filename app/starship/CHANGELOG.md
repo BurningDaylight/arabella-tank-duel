@@ -4,6 +4,11 @@
 боя, физики или ИИ (мажор — механики несовместимы, минор — новые механики и корабли,
 патч — исправления). Стенд дополнительно хранит хеш файла движка и коммит.
 
+## 2.3.2
+- Planner: engagement pressure grows with fight time (`PLAN.pressT`, x2 at 20 s, x3 at 40 s) to stop
+  planner-vs-planner stalls (2.3.1: Blink timed out in 75% of fights).
+- Planner: no simulation while the enemy is farther than `PLAN.farD` (1400); the rule AI drives the approach.
+
 ## 2.3.1
 - Planner: symmetric decisions (both sides plan at the start of a tick on the same world; 2.3.0 let side 1 see
   side 0's move of the current tick).

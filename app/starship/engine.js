@@ -9,7 +9,7 @@
 
 // Версия движка. Поднимать при любом изменении логики боя, физики или ИИ:
 // мажор — механики несовместимы, минор — новые механики/корабли, патч — исправления. Журнал: CHANGELOG.md.
-const VERSION = '2.3.1';
+const VERSION = '2.3.2';
 
 const WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110, DT = 1 / 120, DEG = Math.PI / 180;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -595,7 +595,7 @@ function aiCtl(W, s, e, dt){
 // thrust for the first segment (fire timing and specials still come from the rule AI unless the macro presses spec),
 // then both ships fall back to the rule AI. The opponent is always modelled by the rule AI.
 // Deterministic: clones carry their own RNG state and never touch the real world.
-const PLAN = {seg:0.3, horizon:1.2, lossW:1.1, distW:0.004};
+const PLAN = {seg:0.3, horizon:1.2, lossW:1.1, distW:0.004, pressT:20, farD:1400};
 // preferred fighting distance, same formula as the rule AI (weapon range from current params)
 function prefDist(s){
   const d = s.def, p = s.p;
@@ -645,7 +645,8 @@ function planScore(S, side, my0, en0){
   else {
     sc += 0.03 * me.batt;
     // engagement shaping: stay near own preferred distance, otherwise two careful planners never meet
-    if (en && en.alive) sc -= PLAN.distW * Math.abs(dist2(me, en) - prefDist(me));
+    // pressure grows with fight time so careful pilots cannot stall until the time limit
+    if (en && en.alive) sc -= PLAN.distW * (1 + S.time / PLAN.pressT) * Math.abs(dist2(me, en) - prefDist(me));
     if (S.planet && Math.hypot(wd(me.x, PX), wd(me.y, PY)) < PR + me.def.r + 80) sc -= 3;
   }
   return sc;
@@ -666,6 +667,8 @@ function simulate(W, side, m){
 function planAhead(W, s, e){
   const pl = s.plan || (s.plan = {t:0, m:MACROS[0], k:0});
   if (!e || pl.t > 0) return;
+  // far away there is nothing to plan: the rule AI approaches just as well and much cheaper
+  if (dist2(s, e) > PLAN.farD) { pl.m = MACROS[0]; pl.k = 0; pl.t = PLAN.seg; return; }
   let best = MACROS[0], bs = -Infinity;
   for (const m of MACROS) { const sc = simulate(W, s.side, m); if (sc > bs + 1e-9) { bs = sc; best = m; } }
   pl.m = best; pl.k = 0; pl.t = PLAN.seg;
