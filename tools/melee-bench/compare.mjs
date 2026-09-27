@@ -37,11 +37,13 @@ function load(p){
 }
 const val = c => c.win + c.draw * 0.5;
 const noise = (pa, na, pb, nb) => 2 * Math.sqrt(pa * (1 - pa) / na + pb * (1 - pb) / nb) + 0.005;
+// pilot label: rule, planner, or planner:<objective> when a non-default objective was forced
+const pilotOf = R => (R.d.args.ai || "rule") + (R.d.args.planMode ? ":" + R.d.args.planMode : "");
 function metaLine(R){
   const m = R.meta;
   if (!m) return `без сведений о версиях (старый прогон) · n=${R.n} · ИИ ${R.d.args.diff}${R.d.args.ini ? ' · ' + R.d.args.ini : ''}`;
   const ini = m.ini ? `${m.ini.file}${m.ini.meta.version ? ' «' + m.ini.meta.version + '»' : ''} (${m.ini.sha})` : 'по умолчанию';
-  return `${m.date.slice(0, 16).replace('T', ' ')} · движок v${m.engine} (${m.engineSha}) · git ${m.git.commit || '—'}${m.git.dirty ? '+правки' : ''} · INI ${ini} · n=${R.n} · ИИ ${R.d.args.diff}/${R.d.args.ai || 'rule'} · сиды ${R.d.args.seed || 0}`;
+  return `${m.date.slice(0, 16).replace('T', ' ')} · движок v${m.engine} (${m.engineSha}) · git ${m.git.commit || '—'}${m.git.dirty ? '+правки' : ''} · INI ${ini} · n=${R.n} · ИИ ${R.d.args.diff}/${pilotOf(R)} · сиды ${R.d.args.seed || 0}`;
 }
 function warnings(A, B){
   const w = [], a = A.meta, b = B.meta;
@@ -51,11 +53,11 @@ function warnings(A, B){
     if (!codeSame) w.push(`код движка разный (v${a.engine} → v${b.engine}): изменения идут и от кода, и от баланса`);
     if (!codeSame && a.engine === b.engine) w.push(`код менялся, а версия та же (v${a.engine}) — поднимите VERSION и запишите в CHANGELOG.md`);
     if (b.git && b.git.dirty) w.push(`«стало» посчитано с незакоммиченными правками (${b.git.dirtyFiles.join(', ')}) — по коммиту не воспроизвести`);
-    if (codeSame && iniSame && (A.d.args.seed || 0) === (B.d.args.seed || 0) && A.n === B.n && A.d.args.diff === B.d.args.diff)
+    if (codeSame && iniSame && (A.d.args.seed || 0) === (B.d.args.seed || 0) && A.n === B.n && A.d.args.diff === B.d.args.diff && pilotOf(A) === pilotOf(B))
       w.push('одинаковые код, настройки, сиды и n — результаты должны совпасть один в один');
   }
   if (A.d.args.diff !== B.d.args.diff) w.push(`разный уровень ИИ: ${A.d.args.diff} → ${B.d.args.diff}`);
-  if ((A.d.args.ai || 'rule') !== (B.d.args.ai || 'rule')) w.push(`разный пилот ИИ: ${A.d.args.ai || 'rule'} → ${B.d.args.ai || 'rule'}`);
+  if (pilotOf(A) !== pilotOf(B)) w.push(`разный пилот ИИ: ${pilotOf(A)} → ${pilotOf(B)}`);
   return w;
 }
 function paramChanges(A, B, name){
