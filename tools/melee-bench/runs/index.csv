@@ -27,3 +27,4 @@ run,date,engine,engine_sha,commit,dirty,ini,ini_version,ini_sha,n,diff,seed,note
 20260925-002038_e2.3.2_balance-v7_planner,2026-09-25T00:20:38.960Z,2.3.2,183eeec6f23a,a0984b0,1,balance-v7.ini,balance-v7,d12970f5d87f,50,hard,0,"","siren:75 hare:64 parrot:60"
 20260925-010134_e2.3.2_balance-v6,2026-09-25T01:01:34.603Z,2.3.2,183eeec6f23a,2173d51,0,balance-v6.ini,balance-v6,3bb5a0f2ed51,1000,hard,0,"","leviathan:83 blink:68 hare:63"
 20260925-010151_e2.3.2_balance-v7_planner,2026-09-25T01:01:51.135Z,2.3.2,183eeec6f23a,2173d51,0,balance-v7.ini,balance-v7,d12970f5d87f,50,hard,0,"","siren:75 hare:64 parrot:60"
+20260925-011122_e2.3.2_balance-v8_planner,2026-09-25T01:11:22.348Z,2.3.2,183eeec6f23a,f53c665,0,balance-v8.ini,balance-v8,fac9f141d60f,50,hard,0,"","siren:72 hare:64 parrot:57"
