@@ -9,7 +9,7 @@
 
 // Версия движка. Поднимать при любом изменении логики боя, физики или ИИ:
 // мажор — механики несовместимы, минор — новые механики/корабли, патч — исправления. Журнал: CHANGELOG.md.
-const VERSION = '2.4.0';
+const VERSION = '2.5.0';
 
 const WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110, DT = 1 / 120, DEG = Math.PI / 180;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -39,7 +39,7 @@ const irnd = (W, a, b) => Math.floor(rnd(W, a, b + 1));
 
 // ---------- параметры ----------
 const LABELS = {
-  crew:'Экипаж на старте', crewMax:'Экипаж максимум', batt:'Батарея (макс.)', regen:'Регенерация: сек на 1 ед.',
+  cost:'Цена во флоте, очков', crew:'Экипаж на старте', crewMax:'Экипаж максимум', batt:'Батарея (макс.)', regen:'Регенерация: сек на 1 ед.',
   turn:'Поворот, °/с', thrust:'Тяга (ускорение)', vmax:'Макс. скорость', mass:'Масса (столкновения)',
   fCost:'Оружие: цена', fCd:'Оружие: перезарядка, с', fDmg:'Оружие: урон', fSpd:'Оружие: скорость снаряда',
   fLife:'Оружие: жизнь снаряда, с', fRange:'Оружие: дальность', homing:'Самонаведение, °/с',
@@ -52,19 +52,19 @@ const LABELS = {
   cloakDrain:'Маскировка: расход батареи в секунду', ambushMul:'Засада: множитель урона', ambushT:'Засада: длительность, с',
 };
 const RANGES = {
-  crew:[1,99,1], crewMax:[1,99,1], batt:[1,99,1], regen:[0.02,5,0.01], turn:[20,720,1], thrust:[0,2000,10], vmax:[50,1000,10], mass:[0.5,50,0.5],
+  cost:[1,99,1], crew:[1,99,1], crewMax:[1,99,1], batt:[1,99,1], regen:[0.02,5,0.01], turn:[20,720,1], thrust:[0,2000,10], vmax:[50,1000,10], mass:[0.5,50,0.5],
   fCost:[0,50,1], fCd:[0.02,5,0.01], fDmg:[0,50,1], fSpd:[50,2000,10], fLife:[0.1,10,0.05], fRange:[50,1000,10], homing:[0,720,5],
   sCost:[0,50,1], sCd:[0,10,0.05], sRange:[50,1500,10], sDmg:[0,50,1], sSpd:[50,2000,10], sLife:[0.1,10,0.1],
   fighters:[1,8,1], fighterLife:[1,30,0.5], fighterDmg:[0,10,1], gloryDmg:[0,99,1], gloryR:[50,800,10],
   stealMin:[0,20,1], stealMax:[0,20,1], insultGain:[0,20,1], rebirth:[0,100,5], magnetR:[0,1500,10], magnetF:[0,2000,10], cloakDrain:[0,20,0.1], ambushMul:[1,10,0.1], ambushT:[0,5,0.1],
 };
-const COMMON = ['crew','crewMax','batt','regen','turn','thrust','vmax','mass'];
+const COMMON = ['cost','crew','crewMax','batt','regen','turn','thrust','vmax','mass'];
 
 const SHIPS = [
   {id:'bastion', name:'Бастион', role:'крейсер', r:18, pref:420, frange:800,
    weapon:'Самонаводящаяся ядерная ракета: урон {fDmg}, цена {fCost}. Разгоняется до {fSpd}.',
    special:'Лазер ПРО: сбивает ближайший вражеский снаряд или истребитель в радиусе {sRange}; если их нет — бьёт по кораблю ({sDmg}). Цена {sCost}.',
-   p:{crew:18, crewMax:18, batt:18, regen:0.45, turn:150, thrust:240, vmax:210, mass:6,
+   p:{cost:14, crew:18, crewMax:18, batt:18, regen:0.45, turn:150, thrust:240, vmax:210, mass:6,
       fCost:9, fCd:0.8, fDmg:4, fSpd:420, fLife:3.2, homing:140, sCost:4, sCd:0.3, sRange:170, sDmg:1},
    keys:['fCost','fCd','fDmg','fSpd','fLife','homing','sCost','sCd','sRange','sDmg'],
    shape:[[1.2,0],[0.6,0.35],[-0.9,0.35],[-1,0.6],[-1.15,0.6],[-1.15,-0.6],[-1,-0.6],[-0.9,-0.35],[0.6,-0.35]],
@@ -72,7 +72,7 @@ const SHIPS = [
   {id:'leviathan', name:'Левиафан', role:'дредноут', r:26, pref:360, frange:650,
    weapon:'Плазменный залп: урон {fDmg}, цена {fCost}.',
    special:'Запуск {fighters} истребителей (цена {sCost}): каждый забирает 1 экипажа, летает {fighterLife} с и стреляет по {fighterDmg}; вернувшись, отдаёт экипаж обратно.',
-   p:{crew:42, crewMax:42, batt:42, regen:0.28, turn:92, thrust:170, vmax:170, mass:10,
+   p:{cost:22, crew:42, crewMax:42, batt:42, regen:0.28, turn:92, thrust:170, vmax:170, mass:10,
       fCost:6, fCd:0.45, fDmg:6, fSpd:620, fLife:1.3, sCost:8, sCd:1.0, fighters:2, fighterLife:9, fighterDmg:1},
    keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd','fighters','fighterLife','fighterDmg'],
    shape:[[1.3,0],[0.3,0.25],[0.1,0.8],[-0.5,0.8],[-0.4,0.3],[-1,0.3],[-1,-0.3],[-0.4,-0.3],[-0.5,-0.8],[0.1,-0.8],[0.3,-0.25]],
@@ -80,14 +80,14 @@ const SHIPS = [
   {id:'hare', name:'Заяц', role:'трус', r:13, pref:380, frange:360,
    weapon:'Слабая пушка вперёд: урон {fDmg}, цена {fCost}.',
    special:'Самонаводящаяся ракета НАЗАД: урон {sDmg}, цена {sCost}. Лучшая тактика — удирать и стрелять через плечо.',
-   p:{crew:20, crewMax:20, batt:14, regen:0.22, turn:206, thrust:420, vmax:300, mass:4,
+   p:{cost:18, crew:20, crewMax:20, batt:14, regen:0.22, turn:206, thrust:420, vmax:300, mass:4,
       fCost:1, fCd:0.15, fDmg:1, fSpd:520, fLife:0.7, sCost:3, sCd:0.35, sDmg:2, sSpd:380, sLife:2.6, homing:183},
    keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd','sDmg','sSpd','sLife','homing'],
    shape:'saucer', ditty:[72,69,65,62,60,55], wave:'triangle', captains:['Трусишка','Ах-ох','Бегунок','Пугало']},
   {id:'wraith', name:'Призрак', role:'засадник', r:16, pref:90, frange:150, edge:true,
    weapon:'Огнемёт вплотную: урон {fDmg} за струю, цена {fCost}. Дальность маленькая.',
    special:'Маскировка (цена {sCost}, расход {cloakDrain}/с): невидим и неуязвим для оружия, батарея не заряжается. Выстрел или повторное нажатие снимает маскировку; первые {ambushT} с после выхода из тени урон ×{ambushMul}.',
-   p:{crew:22, crewMax:22, batt:16, regen:0.3, turn:150, thrust:280, vmax:240, mass:6,
+   p:{cost:16, crew:22, crewMax:22, batt:16, regen:0.3, turn:150, thrust:280, vmax:240, mass:6,
       fCost:1, fCd:0.07, fDmg:1, fSpd:360, fLife:0.38, sCost:3, sCd:0.4, cloakDrain:1.5, ambushMul:2, ambushT:0.8},
    keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd','cloakDrain','ambushMul','ambushT'],
    shape:[[1.2,0.15],[0.2,0.5],[-0.8,1.0],[-0.4,0.2],[-1,0],[-0.4,-0.2],[-0.8,-1.0],[0.2,-0.5],[1.2,-0.15]],
@@ -95,28 +95,28 @@ const SHIPS = [
   {id:'blink', name:'Блинк', role:'мерцающий', r:10, pref:200, noGrav:true, noThrust:true,
    weapon:'Автонаводящийся лазер: сам бьёт врага в радиусе {fRange}, урон {fDmg}, цена {fCost}.',
    special:'Случайный телепорт, цена {sCost}. Корабль безынерционный и не подвержен гравитации.',
-   p:{crew:6, crewMax:6, batt:20, regen:0.1, turn:286, thrust:0, vmax:320, mass:1,
+   p:{cost:16, crew:6, crewMax:6, batt:20, regen:0.1, turn:286, thrust:0, vmax:320, mass:1,
       fCost:2, fCd:0.12, fDmg:1, fRange:260, sCost:3, sCd:0.6},
    keys:['fCost','fCd','fDmg','fRange','sCost','sCd'],
    shape:'disc', ditty:[84,88,91,96,91,96], wave:'sine', captains:['Мерцающий','Пых','Нигде','Где-то']},
   {id:'sting', name:'Жало', role:'камикадзе', r:8, pref:0, frange:300, edge:true,
    weapon:'Иглы: урон {fDmg}, цена {fCost}.',
    special:'«Устройство славы»: нажать дважды — взрыв радиусом {gloryR}, до {gloryDmg} урона в центре. Сам корабль гибнет.',
-   p:{crew:6, crewMax:6, batt:4, regen:0.3, turn:258, thrust:520, vmax:330, mass:1,
+   p:{cost:6, crew:6, crewMax:6, batt:4, regen:0.3, turn:258, thrust:520, vmax:330, mass:1,
       fCost:1, fCd:0.18, fDmg:1, fSpd:560, fLife:0.55, gloryDmg:16, gloryR:220},
    keys:['fCost','fCd','fDmg','fSpd','fLife','gloryDmg','gloryR'],
    shape:[[1.3,0],[-0.8,0.8],[-0.4,0],[-0.8,-0.8]], ditty:[67,67,74,79,74,79], wave:'square', captains:['Храбрец','Кроха','Бах','Последний']},
   {id:'siren', name:'Сирена', role:'похитительница', r:13, pref:280, frange:520,
    weapon:'Кинжальный выстрел: урон {fDmg}, цена {fCost}.',
    special:'Песня (цена {sCost}, дальность {sRange}): {stealMin}–{stealMax} экипажа врага вылетают в космос; экипаж в радиусе {magnetR} сам притягивается к Сирене (до {crewMax}).',
-   p:{crew:12, crewMax:42, batt:16, regen:0.3, turn:183, thrust:340, vmax:270, mass:3,
+   p:{cost:15, crew:12, crewMax:42, batt:16, regen:0.3, turn:183, thrust:340, vmax:270, mass:3,
       fCost:1, fCd:0.25, fDmg:2, fSpd:560, fLife:1.0, sCost:5, sCd:1.0, sRange:360, stealMin:2, stealMax:6, magnetR:420, magnetF:260},
    keys:['fCost','fCd','fDmg','fSpd','fLife','sCost','sCd','sRange','stealMin','stealMax','magnetR','magnetF'],
    shape:[[1.3,0],[0.3,0.45],[-0.9,0.3],[-1.1,0],[-0.9,-0.3],[0.3,-0.45]], ditty:[69,72,76,81,76,72], wave:'triangle', captains:['Лорелея','Мелодия','Ария','Нимфа']},
   {id:'parrot', name:'Попугай', role:'задира', r:9, pref:160, frange:300,
    weapon:'Тройная пушка — вперёд и в обе стороны: урон {fDmg} каждым стволом, цена {fCost}.',
    special:'Оскорбление: +{insultGain} к батарее (сама она почти не заряжается). После гибели — {rebirth}% шанс переродиться.',
-   p:{crew:8, crewMax:8, batt:12, regen:1.5, turn:229, thrust:480, vmax:320, mass:1,
+   p:{cost:15, crew:8, crewMax:8, batt:12, regen:1.5, turn:229, thrust:480, vmax:320, mass:1,
       fCost:1, fCd:0.12, fDmg:1, fSpd:500, fLife:0.6, sCd:0.6, insultGain:3, rebirth:50},
    keys:['fCost','fCd','fDmg','fSpd','fLife','sCd','insultGain','rebirth'],
    shape:[[1.2,0],[0.2,0.3],[-0.4,1.0],[-0.3,0.2],[-1,0.3],[-0.8,0],[-1,-0.3],[-0.3,-0.2],[-0.4,-1.0],[0.2,-0.3]],

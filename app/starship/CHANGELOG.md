@@ -4,6 +4,10 @@
 боя, физики или ИИ (мажор — механики несовместимы, минор — новые механики и корабли,
 патч — исправления). Стенд дополнительно хранит хеш файла движка и коммит.
 
+## 2.5.0
+- Ship `cost` (fleet points) as a regular ship param (editor, INI). No effect on combat.
+  Provisional defaults; fair costs come from `tools/melee-bench/costs.mjs`.
+
 ## 2.4.0
 - Planner objective is now tiered (`PLAN.mode = 'tiered'`, default): never die for nothing, then win and survive,
   mutual kill only when weaker, then max damage with an acceptable trade (`PLAN.tradeW` 0.8), then close to

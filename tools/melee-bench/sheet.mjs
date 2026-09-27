@@ -20,7 +20,7 @@ function loadSet(path){
 // Rough, AI-independent numbers. burst = damage from a full battery; sus = sustained DPS limited by regen.
 function derive(d, p){
   const regen = 1 / p.regen + (d.id === 'parrot' ? p.insultGain / Math.max(0.1, p.sCd) : 0);  // battery/s (parrot: insults are free battery)
-  const r = {crew:p.crew, speed:p.vmax};
+  const r = {cost:p.cost, crew:p.crew, speed:p.vmax};
   r.range = d.id === 'blink' ? p.fRange : Math.round((p.fSpd || 0) * (p.fLife || 0));
   const shots = p.fCost > 0 ? Math.floor(p.batt / p.fCost) : 99;
   r.burst = shots * p.fDmg;
@@ -55,7 +55,7 @@ const args = process.argv.slice(2), opt = {};
 for (let i = 0; i < args.length; i++) if (args[i] === '--ini') opt.ini = args[++i]; else if (args[i] === '--vs') opt.vs = args[++i];
 const A = loadSet(opt.ini), B = opt.vs ? loadSet(opt.vs) : null;
 const pad = (s, w) => (String(s) + ' '.repeat(w)).slice(0, w);
-const COLS = [['crew', 'экип'], ['speed', 'скор'], ['range', 'дальн'], ['burst', 'залп_бат'], ['burstT', 'за_с'], ['dpsMax', 'урон/с_макс'], ['dpsSus', 'урон/с_уст'], ['power', 'сила']];
+const COLS = [['cost', 'цена'], ['crew', 'экип'], ['speed', 'скор'], ['range', 'дальн'], ['burst', 'залп_бат'], ['burstT', 'за_с'], ['dpsMax', 'урон/с_макс'], ['dpsSus', 'урон/с_уст'], ['power', 'сила']];
 console.log(`\nПаспорт кораблей — движок v${E.VERSION}${opt.ini ? ' · ' + opt.ini : ' · по умолчанию'}${B ? ' → ' + opt.vs : ''}\n`);
 console.log(pad('корабль', 10) + COLS.map(c => pad(c[1], B ? 14 : 12)).join(''));
 for (const d of E.SHIPS) {

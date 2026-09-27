@@ -68,6 +68,9 @@ textarea{width:100%;margin-top:8px;font-size:14px;touch-action:auto;resize:verti
 .pcard b em{font-style:normal;font-weight:normal;color:#8cf;font-size:12px}
 .pcard i{font-style:normal;font-size:11px;color:#9ab}
 .pcard .sinfo{margin-top:2px;font-size:11px}
+.pcard.on{border-color:#fc6;background:#2a2818}
+.pcard.dis{opacity:.45}
+.bld{display:flex;gap:8px;justify-content:center;margin-top:10px}
 #watchBar{position:fixed;top:max(6px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:12;display:flex;gap:6px;align-items:center;
   flex-wrap:wrap;justify-content:center;background:rgba(0,0,20,.82);border:1px solid #446;border-radius:10px;padding:6px 10px;font-size:13px;max-width:96vw}
 #watchBar button{font-size:15px;padding:3px 9px;touch-action:manipulation}
@@ -159,11 +162,12 @@ const OPTS = [
   {k:'diff', label:'Сложность робота', opts:[['easy','Легко'],['normal','Средне'],['hard','Сложно']]},
   {k:'pilot', label:'Пилот робота', opts:[['rule','Правила (быстрый)'],['planner','Планировщик (умнее)']]},
   {k:'fleet', label:'Кораблей во флоте', opts:[['3','3'],['5','5'],['8','Все 8']]},
+  {k:'budget', label:'Флот по очкам', opts:[['off','Нет (по числу)'],['60','60'],['90','90'],['120','120']]},
   {k:'planet', label:'Планета', opts:[['on','Есть'],['off','Нет']]},
   {k:'hints', label:'Подсказки дальности', opts:[['on','Показывать'],['off','Скрыть']]},
   {k:'sound', label:'Звук', opts:[['on','Вкл'],['off','Выкл']]},
 ];
-const DEFAULT_GAME = {mode:'ai', diff:'normal', pilot:'rule', fleet:'5', planet:'on', hints:'on', sound:'on'};
+const DEFAULT_GAME = {mode:'ai', diff:'normal', pilot:'rule', fleet:'5', budget:'off', planet:'on', hints:'on', sound:'on'};
 const KEY = 'melee_cfg_v2';
 const store = (() => { try { const s = window.localStorage; s.setItem('__t','1'); s.removeItem('__t'); return s; } catch (_) { return null; } })();
 function freshCfg(){ return Object.assign({}, DEFAULT_GAME, {phys:Object.assign({}, DEFAULT_PHYS), ships:{}}); }
@@ -185,7 +189,7 @@ function saveCfg(){ try { if (store) store.setItem(KEY, JSON.stringify(cfg)); } 
 let cfg = loadCfg();
 const effP = d => E.effP(d, cfg.ships);
 const infoHTML = (d, p) => `<div><span class="tag w">[оружие]</span>${E.fmt(d.weapon, p)}</div><div><span class="tag s">[спец]</span>${E.fmt(d.special, p)}</div>`;
-const statLine = p => `Экипаж ${p.crew}${p.crewMax > p.crew ? '/' + p.crewMax : ''} · Батарея ${p.batt} · Скорость ${p.vmax}`;
+const statLine = p => `Экипаж ${p.crew}${p.crewMax > p.crew ? '/' + p.crewMax : ''} · Батарея ${p.batt} · Скорость ${p.vmax}${p.cost ? ' · ' + p.cost + ' очк.' : ''}`;
 
 // ================= СОСТОЯНИЕ =================
 const canvas = $('game'), ctx = canvas.getContext('2d');
@@ -288,13 +292,17 @@ function pickFleet(n){ const idx = SHIPS.map((_, i) => i); for (let i = idx.leng
 function startMatch(){
   W = E.createWorld({seed:(Math.random() * 4294967296) >>> 0, phys:cfg.phys, ships:cfg.ships, planet:cfg.planet === 'on', diff:[cfg.diff, cfg.diff], ai:[null, cfg.pilot]});
   sides = [0, 1].map(i => ({i, ai:i === 1 && cfg.mode === 'ai', label:cfg.mode === 'ai' ? (i ? 'Робот' : 'Вы') : (i ? 'Красные' : 'Синие'),
-    color:i ? '#ff5a4a' : '#3fa9ff', fleet:pickFleet(+cfg.fleet), used:[], ship:null, kills:0}));
+    color:i ? '#ff5a4a' : '#3fa9ff', fleet:cfg.budget !== 'off' ? budgetFleet(+cfg.budget) : pickFleet(+cfg.fleet), used:[], ship:null, kills:0}));
   particles = []; bubbles = []; msgs = []; time = 0; shake = 0;
   for (const o of kb) for (const k in o) o[k] = false;
   for (const o of tin) for (const k in o) o[k] = false;
   menuOpen = false;
   $('menu').classList.remove('show'); $('over').classList.remove('show');
   $('menuBtn').style.display = 'block';
+  if (cfg.budget !== 'off') {   // humans build their fleet first, robots keep the random one
+    buildQueue = sides.filter(sd => !sd.ai).map(sd => sd.i);
+    if (buildQueue.length) { state = 'build'; showBuilder(); return; }
+  }
   state = 'pick'; pickQueue = [0, 1];
   nextPick();
 }
@@ -363,6 +371,53 @@ function updateCam(dt){
   cam.zt = zt;
   cam.zoom += (zt - cam.zoom) * Math.min(1, 5 * dt);
   cam.x += wd(tx, cam.x) * Math.min(1, 8 * dt); cam.y += wd(ty, cam.y) * Math.min(1, 8 * dt);
+}
+
+// ================= FLEET BUILDER (budget mode) =================
+// With «Флот по очкам» every side gets a fleet within the budget: robots a random one, humans build theirs
+// (starting from a random proposal). Costs are ship params (cost), editable in the ship editor and INI.
+let buildQueue = [];
+const shipCost = t => effP(SHIPS[t]).cost || 10;
+function budgetFleet(B){
+  const idx = SHIPS.map((_, i) => i);
+  for (let i = idx.length - 1; i > 0; i--) { const j = irnd(0, i), x = idx[i]; idx[i] = idx[j]; idx[j] = x; }
+  const out = []; let sum = 0;
+  for (const t of idx) { const c = shipCost(t); if (sum + c <= B) { out.push(t); sum += c; } }
+  if (!out.length) { let best = 0; for (let t = 1; t < SHIPS.length; t++) if (shipCost(t) < shipCost(best)) best = t; out.push(best); }
+  return out.sort((a, b) => a - b);
+}
+function showBuilder(){
+  const sd = sides[buildQueue[0]], B = +cfg.budget, sel = new Set(sd.fleet), g = $('pickGrid');
+  const draw = () => {
+    const used = Array.from(sel).reduce((s, t) => s + shipCost(t), 0);
+    $('pickTitle').textContent = sd.label + ': соберите флот — ' + used + ' из ' + B + ' очков';
+    $('pickTitle').style.color = sd.color;
+    g.textContent = '';
+    for (let ti = 0; ti < SHIPS.length; ti++) {
+      const d = SHIPS[ti], p = effP(d), on = sel.has(ti), fits = on || used + shipCost(ti) <= B;
+      const b = document.createElement('button'); b.className = 'pcard' + (on ? ' on' : '') + (fits ? '' : ' dis');
+      const cv = document.createElement('canvas'); cv.width = 180; cv.height = 110; cv.style.width = '90px'; cv.style.height = '55px';
+      const c = cv.getContext('2d'); c.scale(2, 2); c.translate(45, 27); c.rotate(-0.3); drawShipAt(c, d, sd.color, 8 + d.r * 0.6, false);
+      const nm = document.createElement('b'); nm.innerHTML = d.name + ' <em>— ' + d.role + ' · ' + shipCost(ti) + ' очк.</em>';
+      const st = document.createElement('i'); st.textContent = statLine(p);
+      const info = document.createElement('div'); info.className = 'sinfo'; info.innerHTML = infoHTML(d, p);
+      b.append(cv, nm, st, info);
+      b.addEventListener('click', () => { if (on) sel.delete(ti); else if (fits) sel.add(ti); draw(); });
+      g.appendChild(b);
+    }
+    const row = document.createElement('div'); row.className = 'bld'; row.style.gridColumn = '1 / -1';
+    const again = document.createElement('button'); again.className = 'small'; again.textContent = 'Случайный флот';
+    again.addEventListener('click', () => { sel.clear(); for (const t of budgetFleet(B)) sel.add(t); draw(); });
+    const ok = document.createElement('button'); ok.className = 'small'; ok.textContent = 'Готово'; ok.disabled = !sel.size;
+    ok.addEventListener('click', () => {
+      sd.fleet = Array.from(sel).sort((a, b) => a - b); buildQueue.shift();
+      if (buildQueue.length) { showBuilder(); return; }
+      $('pick').classList.remove('show'); state = 'pick'; pickQueue = [0, 1]; nextPick();
+    });
+    row.append(again, ok); g.appendChild(row);
+  };
+  draw();
+  $('pick').classList.add('show'); $('touch').innerHTML = '';
 }
 
 // ================= ВЫБОР КОРАБЛЯ =================
