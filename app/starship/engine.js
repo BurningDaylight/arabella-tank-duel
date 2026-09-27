@@ -9,7 +9,7 @@
 
 // Версия движка. Поднимать при любом изменении логики боя, физики или ИИ:
 // мажор — механики несовместимы, минор — новые механики/корабли, патч — исправления. Журнал: CHANGELOG.md.
-const VERSION = '2.3.2';
+const VERSION = '2.4.0';
 
 const WW = 3200, PX = WW / 2, PY = WW / 2, PR = 110, DT = 1 / 120, DEG = Math.PI / 180;
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -595,7 +595,7 @@ function aiCtl(W, s, e, dt){
 // thrust for the first segment (fire timing and specials still come from the rule AI unless the macro presses spec),
 // then both ships fall back to the rule AI. The opponent is always modelled by the rule AI.
 // Deterministic: clones carry their own RNG state and never touch the real world.
-const PLAN = {seg:0.3, horizon:1.2, lossW:1.1, distW:0.004, pressT:20, farD:1400};
+const PLAN = {seg:0.3, horizon:1.2, lossW:1.1, distW:0.004, pressT:20, farD:1400, mode:'tiered', tradeW:0.8};
 // preferred fighting distance, same formula as the rule AI (weapon range from current params)
 function prefDist(s){
   const d = s.def, p = s.p;
@@ -661,17 +661,42 @@ function simulate(W, side, m){
     ctls[side] = k < seg ? macroCtl(S, me, e, m, k) : null;
     step(S, ctls);
   }
-  return planScore(S, side, my0, en0);
+  const me = S.ships[side], en = S.ships[1 - side], alive = me && me.alive, enAlive = en && en.alive;
+  const myC = alive ? me.crew : 0, enC = enAlive ? en.crew : 0;
+  return {m, dealt:en0 - enC, lost:my0 - myC, kill:!enAlive, died:!alive, myC,
+    dist:alive && enAlive ? dist2(me, en) : 0, pref:prefDist(W.ships[side]), batt:alive ? me.batt : 0,
+    planet:!!(alive && S.planet && Math.hypot(wd(me.x, PX), wd(me.y, PY)) < PR + me.def.r + 80),
+    score:planScore(S, side, my0, en0)};
 }
+function argmax(list, f){ let b = list[0], bv = f(b); for (const r of list) { const v = f(r); if (v > bv + 1e-9) { b = r; bv = v; } } return b; }
+// tiered objective (PLAN.mode = 'tiered'):
+//   1) never pick a plan where I die and the enemy survives (unless every plan does)
+//   2) a plan that kills the enemy and keeps me alive wins; among those, the one that keeps most crew
+//   3) mutual destruction counts as a kill only when I am the weaker side (fewer crew than the enemy)
+//   4) otherwise take the most damage dealt, as long as the trade is acceptable: dealt - tradeW * lost > 0
+//   5) if no plan hurts the enemy: get to the preferred distance; losses are very expensive, planet forbidden
+function pickTiered(W, s, rs){
+  const e = other(W, s.side), weaker = !!(e && s.crew < e.crew);
+  const safe = rs.filter(r => !r.died || (r.kill && weaker));
+  const pool = safe.length ? safe : rs;
+  const wins = pool.filter(r => r.kill && !r.died);
+  if (wins.length) return argmax(wins, r => r.myC);
+  const trades = pool.filter(r => r.kill);
+  if (trades.length) return argmax(trades, r => r.dealt);
+  const hits = pool.filter(r => r.dealt > 0 && r.dealt - PLAN.tradeW * r.lost > 0);
+  if (hits.length) return argmax(hits, r => r.dealt - PLAN.tradeW * r.lost);
+  return argmax(pool, r => -Math.abs(r.dist - r.pref) - (r.planet ? 500 : 0) - 50 * r.lost + 0.5 * r.batt);
+}
+
 // choose a macro when due; runs for every planner side at the start of a tick, before anyone moves
 function planAhead(W, s, e){
   const pl = s.plan || (s.plan = {t:0, m:MACROS[0], k:0});
   if (!e || pl.t > 0) return;
   // far away there is nothing to plan: the rule AI approaches just as well and much cheaper
   if (dist2(s, e) > PLAN.farD) { pl.m = MACROS[0]; pl.k = 0; pl.t = PLAN.seg; return; }
-  let best = MACROS[0], bs = -Infinity;
-  for (const m of MACROS) { const sc = simulate(W, s.side, m); if (sc > bs + 1e-9) { bs = sc; best = m; } }
-  pl.m = best; pl.k = 0; pl.t = PLAN.seg;
+  const rs = MACROS.map(m => simulate(W, s.side, m));
+  const pick = PLAN.mode === 'tiered' ? pickTiered(W, s, rs) : argmax(rs, r => r.score);   // 'weighted' = 2.3.2
+  pl.m = pick.m; pl.k = 0; pl.t = PLAN.seg;
 }
 function plannerCtl(W, s, e){
   if (!e || !s.plan) return aiCtl(W, s, e, DT);

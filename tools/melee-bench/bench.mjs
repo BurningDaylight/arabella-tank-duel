@@ -44,6 +44,7 @@ function seedOf(i, j, k, base){ return (((i + 1) * 73856093) ^ ((j + 1) * 193496
 if (!isMainThread) {
   // dynamic queue: the main thread hands out chunks (pair + seed range) as threads become free
   const {opt} = workerData;
+  if (opt.planMode) E.PLAN.mode = opt.planMode;   // planner objective override for experiments
   parentPort.on('message', job => {
     if (!job) process.exit(0);
     const [i, j, k0, k1] = job;
@@ -82,6 +83,7 @@ function parseArgs(){
     else if (k === '--compare') a.compare = nx();
     else if (k === '--note') a.note = nx();
     else if (k === '--ai') a.ai = nx();
+    else if (k === '--plan-mode') a.planMode = nx();
     else if (k === '-h' || k === '--help') {
       console.log('Опции: --n 200 --time 90 --diff easy|normal|hard --ini набор.ini --ships id1,id2 --no-planet --seed 0 --workers N --out папка --compare prev|latest|папка --note "текст"');
       console.log('Корабли: ' + E.SHIPS.map(d => d.id + ' (' + d.name + ')').join(', '));
@@ -101,7 +103,7 @@ function gitInfo(){
 }
 function main(){
   const a = parseArgs();
-  const opt = {n:a.n, time:a.time, diff:a.diff, phys:{}, ships:{}, planet:a.planet, seed:a.seed, ai:a.ai};
+  const opt = {n:a.n, time:a.time, diff:a.diff, phys:{}, ships:{}, planet:a.planet, seed:a.seed, ai:a.ai, planMode:a.planMode};
   let ini = null;
   if (a.ini) {
     let txt; try { txt = readFileSync(a.ini, 'utf8'); } catch (_) { console.error(`Нет файла настроек: ${a.ini}`); process.exit(1); }
@@ -116,7 +118,7 @@ function main(){
   if (!a.out) {
     const st = meta.date.replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
     const tag = (ini && ((ini.meta && ini.meta.version) || ini.file.replace(/\.[^.]+$/, ''))) || 'default';
-    a.out = join(RUNS, `${st}_e${meta.engine}_${tag.replace(/[^\w.-]+/g, '_')}${a.ai !== 'rule' ? '_' + a.ai : ''}`);
+    a.out = join(RUNS, `${st}_e${meta.engine}_${tag.replace(/[^\w.-]+/g, '_')}${a.ai !== 'rule' ? '_' + a.ai : ''}${a.planMode ? '_' + a.planMode : ''}`);
   }
   console.log(`Движок v${meta.engine} (${meta.engineSha}) · git ${meta.git.commit || '—'}${meta.git.dirty ? ' + незакоммиченные правки: ' + meta.git.dirtyFiles.join(', ') : ''}`);
   if (ini) {
@@ -132,7 +134,7 @@ function main(){
   for (const [i, j] of jobs) for (let k0 = 0; k0 < a.n; k0 += chunk) queue.push([i, j, k0, Math.min(a.n, k0 + chunk)]);
   const per = Math.max(1, Math.min(a.workers, queue.length));
   const total = jobs.length; let got = 0; const res = [], t0 = Date.now();
-  console.log(`Кораблей: ${ids.length}, пар: ${total}, матчей на пару: ${a.n}, потоков: ${per}, ИИ: ${a.diff}/${a.ai}, лимит: ${a.time} с, сиды: серия ${a.seed}`);
+  console.log(`Кораблей: ${ids.length}, пар: ${total}, матчей на пару: ${a.n}, потоков: ${per}, ИИ: ${a.diff}/${a.ai}${a.planMode ? ':' + a.planMode : ''}, лимит: ${a.time} с, сиды: серия ${a.seed}`);
   for (let t = 0; t < per; t++) {
     const w = new Worker(fileURLToPath(import.meta.url), {workerData:{opt}});
     w.on('message', m => {
@@ -200,7 +202,7 @@ function finish(a, ids, res, t0, meta){
   // replayable examples per pair, keyed 'idI,idJ' with i <= j in ship order
   const examples = Object.fromEntries(res.map(r => [E.SHIPS[r.i].id + ',' + E.SHIPS[r.j].id, r.ex || {}]));
   mkdirSync(a.out, {recursive:true});
-  const args = {n:a.n, time:a.time, diff:a.diff, ini:a.ini, planet:a.planet, seed:a.seed, ships:a.ships, workers:a.workers, ai:a.ai};
+  const args = {n:a.n, time:a.time, diff:a.diff, ini:a.ini, planet:a.planet, seed:a.seed, ships:a.ships, workers:a.workers, ai:a.ai, planMode:a.planMode};
   const data = {meta, date:meta.date, args, seconds:secs, ships:ids.map(i => ({i, id:E.SHIPS[i].id, name:name(i), score:score(i), stat:shipStat(i)})), matrix:M, examples};
   writeFileSync(join(a.out, 'results.json'), JSON.stringify(data, null, 1));
   const csv = ['A,B,win,lose,draw,mutual,timeout,avg_time,avg_crew_left'];

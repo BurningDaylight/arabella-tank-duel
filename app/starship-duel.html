@@ -636,7 +636,7 @@ function watchInit(){
   if (ia < 0 || ib < 0) { showErr('Режим зрителя: неизвестный корабль в a= или b='); return; }
   const seed = (Number(q.get('seed')) >>> 0) || ((Math.random() * 4294967296) >>> 0);
   WATCH = {ia:ia, ib:ib, seed:seed, diff:q.get('diff') || 'hard', time:Number(q.get('time')) || 90,
-    planet:q.get('planet') !== '0', ini:q.get('ini'), ish:q.get('ish'), ev:q.get('ev'), expect:q.get('expect'), ai:q.get('ai') || 'rule',
+    planet:q.get('planet') !== '0', ini:q.get('ini'), ish:q.get('ish'), ev:q.get('ev'), expect:q.get('expect'), ai:q.get('ai') || 'rule', pm:q.get('pm') || '',
     si:3, speed:1, paused:false, done:false, set:null, note:'', result:null};
   menuOpen = false; state = 'watch';
   $('menu').classList.remove('show'); $('menuBtn').style.display = 'none'; $('watchBar').style.display = 'flex';
@@ -658,6 +658,7 @@ function watchSetIni(txt){
 }
 function watchStart(){
   const S = WATCH.set, seed = WATCH.seed, A = seed & 1, B = 1 - A;
+  if (WATCH.pm) E.PLAN.mode = WATCH.pm;
   W = E.createWorld({seed:seed, phys:S.phys, ships:S.ships, planet:WATCH.planet, diff:[WATCH.diff, WATCH.diff], ai:[WATCH.ai, WATCH.ai]});
   sides = [0, 1].map(i => ({i:i, ai:true, label:i === A ? 'A' : 'B', color:i === A ? '#3fa9ff' : '#ff5a4a', fleet:[], used:[], ship:null, kills:0}));
   if (seed & 2) { E.spawn(W, A, WATCH.ia); E.spawn(W, B, WATCH.ib); } else { E.spawn(W, B, WATCH.ib); E.spawn(W, A, WATCH.ia); }

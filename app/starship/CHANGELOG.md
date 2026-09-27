@@ -4,6 +4,12 @@
 боя, физики или ИИ (мажор — механики несовместимы, минор — новые механики и корабли,
 патч — исправления). Стенд дополнительно хранит хеш файла движка и коммит.
 
+## 2.4.0
+- Planner objective is now tiered (`PLAN.mode = 'tiered'`, default): never die for nothing, then win and survive,
+  mutual kill only when weaker, then max damage with an acceptable trade (`PLAN.tradeW` 0.8), then close to
+  the preferred distance. The old weighted score stays as `PLAN.mode = 'weighted'` (identical to 2.3.2).
+  Fixes planner stalls where every even trade scored negative (Blink vs Blink).
+
 ## 2.3.2
 - Planner: engagement pressure grows with fight time (`PLAN.pressT`, x2 at 20 s, x3 at 40 s) to stop
   planner-vs-planner stalls (2.3.1: Blink timed out in 75% of fights).
