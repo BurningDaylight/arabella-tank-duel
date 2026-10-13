@@ -5,6 +5,9 @@
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
 
+    "serve": "echo 'http://localhost:8000/app/  (Ctrl+C to stop)' && python3 -m http.server 8000",
+    "serve:stop": "fuser -k 8000/tcp || true",
+
     "bench": "node tools/melee-bench/bench.mjs",
     "bench:quick": "node tools/melee-bench/bench.mjs --n 200",
     "bench:full": "node tools/melee-bench/bench.mjs --n 1000",
