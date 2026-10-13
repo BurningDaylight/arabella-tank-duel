@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   var CONFIG = {
-    id: 'G-XXXXXXXXXX',                       // GA4 measurement id; the placeholder means "log only"
+    id: 'G-55KZLMEX60',                       // GA4 measurement id; the placeholder means "log only"
     prodHosts: ['burningdaylight.github.io'], // replace with the real prod domain later: old hosts become staging
     localHosts: /^(localhost|127(\.\d+){3}|\[::1\]|0\.0\.0\.0|10(\.\d+){3}|192\.168(\.\d+){2}|172\.(1[6-9]|2\d|3[01])(\.\d+){2})$/,
     consent: 'none',                          // 'none' | 'banner' (vanilla-cookieconsent v3 from CDN, Consent Mode v2)
