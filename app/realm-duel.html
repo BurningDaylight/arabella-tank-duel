@@ -71,6 +71,7 @@ button:disabled{opacity:.35}
 </head>
 <body>
 <div id="err"></div>
+<script src="sounds/manifest.js"></script>
 <script src="analytics.js" data-game="realm-duel"></script>
 <script>
 /* Звук для Властителей */
@@ -173,7 +174,12 @@ button:disabled{opacity:.35}
           function (a) { add(n, a); bank(k + 1); },
           function () { if (k === 1) single(0); });
       }
-      bank(1);
+      // manifest: request only files that exist; no manifest -> probe until the first miss
+      var M = window.SOUND_MANIFEST;
+      if (M && M[n] !== undefined) {
+        for (var k = 1; k <= M[n]; k++) probe('sounds/' + n + k + '.ogg', function (a) { add(n, a); }, function () {});
+        if (!M[n] && M.single && M.single[n]) probe('sounds/' + n + '.' + M.single[n], function (a) { add(n, a); }, function () {});
+      } else bank(1);
     });
   };
   S.play = function (name) {

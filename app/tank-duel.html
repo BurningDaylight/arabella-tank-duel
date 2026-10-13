@@ -95,6 +95,7 @@ th{color:#999;font-weight:normal}
 </head>
 <body>
 <div id="err"></div>
+<script src="sounds/manifest.js"></script>
 <script src="analytics.js" data-game="tank-duel"></script>
 <script>
 window.addEventListener('error', function (e) {
@@ -504,7 +505,14 @@ function loadSamples(){
     const single = i => { if (i < exts.length) probe(`sounds/${n}.${exts[i]}`, a => addSample(n, a), () => single(i + 1)); };
     // банк: shot1.ogg, shot2.ogg, … — до первого отсутствующего номера
     const bank = k => { if (k <= 24) probe(`sounds/${n}${k}.ogg`, a => { addSample(n, a); bank(k + 1); }, () => { if (k === 1) single(0); }); };
-    try { bank(1); } catch (_) {}
+    // manifest: request only files that exist; no manifest -> probe name1, name2, ... until the first miss
+    const M = window.SOUND_MANIFEST;
+    try {
+      if (M && M[n] !== undefined) {
+        for (let k = 1; k <= M[n]; k++) probe(`sounds/${n}${k}.ogg`, a => addSample(n, a), () => {});
+        if (!M[n] && M.single && M.single[n]) probe(`sounds/${n}.${M.single[n]}`, a => addSample(n, a), () => {});
+      } else bank(1);
+    } catch (_) {}
   }
 }
 const lastPlay = {};

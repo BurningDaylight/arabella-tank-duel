@@ -145,3 +145,4 @@ TXT
 echo "== Итого =="
 for t in "${TYPES[@]}"; do printf '  %-8s %s\n' "$t" "${COUNT[$t]:-0 — будет синтез}"; done
 echo "Готово: папка $OUT/ рядом с игрой. Перезапустите игру."
+node "$(dirname "$0")/../tools/sounds-manifest.mjs"
