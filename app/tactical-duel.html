@@ -50,6 +50,7 @@ button{font-family:inherit;color:#fff;background:#262a38;border:2px solid #4a507
 </style>
 </head>
 <body>
+<script src="analytics.js" data-game="blue-grey" data-version="1.0"></script>
 <div id="err"></div>
 <script>
 window.addEventListener('error', function (e) {
@@ -580,9 +581,11 @@ function startBattle(){
   $('menu').classList.remove('show'); $('over').classList.remove('show');
   $('menuBtn').style.display = 'block';
   buildTouch(); sfx('bugle');
+  if (window.GA) GA.start({mode:cfg.mode, difficulty:cfg.diff, cannons:+cfg.cannons, corps:+cfg.corps, men:+cfg.men, cav:+cfg.cav});
 }
 function showOver(){
   state = 'over';
+  if (window.GA) GA.end(cfg.mode === 'pvp' ? GA.RESULT.PVP : winner < 0 ? GA.RESULT.DRAW : winner === 0 ? GA.RESULT.WIN : GA.RESULT.LOSE);
   const a = aliveUnits(0), b = aliveUnits(1);
   const cnt = arr => `💣${arr.filter(u => u.kind === 'can').length} 🪖${arr.filter(u => u.kind === 'inf').length} 🐎${arr.filter(u => u.kind === 'cav').length}`;
   $('overTitle').textContent = winner < 0 ? 'Ничья — поле опустело' : `Победа: ${SIDES[winner].name}!`;

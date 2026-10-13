@@ -95,6 +95,7 @@ th{color:#999;font-weight:normal}
 </head>
 <body>
 <div id="err"></div>
+<script src="analytics.js" data-game="tank-duel"></script>
 <script>
 window.addEventListener('error', function (e) {
   var d = document.getElementById('err'); if (!d) return;
@@ -611,6 +612,8 @@ function groundUnder(t){
 }
 
 // ================= РАУНДЫ =================
+// analytics: a level is one round (rounds go on until the player leaves); game start is its own event
+const TANK_EVENT = window.GA ? GA.defineEvents({GAME_START:'tank_game_start'}) : {};
 function newGame(){
   players = cfg.players.map((p, i) => ({
     name:(p.name || '').trim() || (p.type === 'ai' ? 'Робот ' : 'Игрок ') + (i + 1),
@@ -618,6 +621,7 @@ function newGame(){
     pitch:p.type === 'ai' ? 0.5 + Math.random() * 0.6 : 0.9 + Math.random() * 0.4}));
   round = 0;
   $('menu').classList.remove('show');
+  if (window.GA) GA.event(TANK_EVENT.GAME_START, {players:players.length, humans:players.filter(p => !p.ai).length});
   startRound();
 }
 function startRound(){
@@ -638,6 +642,7 @@ function startRound(){
   $('roundOver').classList.remove('show');
   screen = 'game';
   turn = (round - 1) % tanks.length;
+  if (window.GA) GA.start({round:round, players:tanks.length, humans:players.filter(p => !p.ai).length});
   startTurn();
 }
 function placeTanks(){
@@ -681,6 +686,9 @@ function endRound(winner, skipped){
   state = 'over'; charging = false; fireBtn.classList.remove('held');
   if (winner && !skipped) winner.p.wins++;
   const humans = players.filter(p => !p.ai).length;
+  if (window.GA) GA.end(skipped ? GA.RESULT.QUIT : !humans ? GA.RESULT.SPECTATE : !winner ? GA.RESULT.DRAW
+      : humans > 1 ? GA.RESULT.PVP : winner.ai ? GA.RESULT.LOSE : GA.RESULT.WIN,
+    {round:round, reason:skipped ? 'skip' : undefined, winner_type:winner ? (winner.ai ? 'ai' : 'human') : undefined});
   let title;
   if (skipped) title = `Раунд ${round} пропущен`;
   else if (!winner) title = `Раунд ${round}: выживших нет`;

@@ -14,7 +14,7 @@
   };
 
   var EVENT = Object.freeze({LEVEL_START:'level_start', LEVEL_END:'level_end'});
-  var RESULT = Object.freeze({WIN:'win', LOSE:'lose', DRAW:'draw', PVP:'pvp', QUIT:'quit'});
+  var RESULT = Object.freeze({WIN:'win', LOSE:'lose', DRAW:'draw', PVP:'pvp', QUIT:'quit', SPECTATE:'spectate'});   // spectate: robots only
   var NAME_RE = /^[A-Za-z][A-Za-z0-9_]{0,39}$/;
   var known = {}, results = {};
   Object.keys(EVENT).forEach(function (k) { known[EVENT[k]] = true; });
@@ -74,9 +74,10 @@
     },
     event: send,
     // a new start while a game is running closes the previous one as quit
-    start: function (params) {
+    // opts.leaveIsQuit = false: closing the tab is not a quit (long campaigns with saves)
+    start: function (params, opts) {
       if (level) GA.end(RESULT.QUIT, {reason:'restart'});
-      level = {t0:Date.now(), params:params || {}};
+      level = {t0:Date.now(), params:params || {}, leaveIsQuit:!(opts && opts.leaveIsQuit === false)};
       send(EVENT.LEVEL_START, level.params);
     },
     end: function (result, params) {
@@ -89,7 +90,7 @@
     running: function () { return !!level; },
   };
   // leaving the page mid-game counts as quit; beacon transport survives the unload
-  window.addEventListener('pagehide', function () { if (level) GA.end(RESULT.QUIT, {reason:'leave', transport_type:'beacon'}); });
+  window.addEventListener('pagehide', function () { if (level && level.leaveIsQuit) GA.end(RESULT.QUIT, {reason:'leave', transport_type:'beacon'}); });
   window.GA = GA;
 
   // optional consent banner (CONFIG.consent = 'banner'): vanilla-cookieconsent v3, Russian texts

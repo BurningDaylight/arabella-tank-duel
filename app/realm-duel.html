@@ -71,6 +71,7 @@ button:disabled{opacity:.35}
 </head>
 <body>
 <div id="err"></div>
+<script src="analytics.js" data-game="realm-duel"></script>
 <script>
 /* Звук для Властителей */
 (function () {
@@ -749,6 +750,7 @@ function occupy(s, tx, ty){
   if (c && c.owner !== s.owner) {
     const old = c.owner;
     c.owner = s.owner; c.prod = null; c.progress = 0;
+    if (window.GA && S.factions[s.owner].human) GA.event(REALM_EVENT.CITY_CAPTURED, {turn:S.turn, cities:S.cities.filter(q => q.owner === s.owner).length});
     if (viewerIdx < 0 || isVisible(viewerIdx, tx, ty)) sfx('shield');
     if (viewerIdx < 0 || isVisible(viewerIdx, tx, ty) || (old >= 0 && S.factions[old].human)) toast(`${sideName(s.owner)} захватывают ${c.name}!`, colorOf(s.owner));
   }
@@ -880,9 +882,14 @@ function checkAlive(){
   if (alive.length <= 1) gameOver(alive[0] || null);
   else if (anyHuman && !humanAlive) gameOver(null, true);
 }
+// analytics: a level is the whole campaign; loading a save starts it again (loaded:true); leaving the tab is not a quit
+const REALM_EVENT = window.GA ? GA.defineEvents({CITY_CAPTURED:'realm_city_captured', GAME_LOAD:'realm_game_load'}) : {};
 function gameOver(winner, lost){
   if (S.over) return;
   S.over = true; driver = null; mover = null;
+  if (window.GA) { const humans = S.factions.filter(f => f.human).length;
+    GA.end(lost ? GA.RESULT.LOSE : !winner ? GA.RESULT.DRAW : !humans ? GA.RESULT.SPECTATE : !winner.human ? GA.RESULT.LOSE
+      : humans > 1 ? GA.RESULT.PVP : GA.RESULT.WIN, {turn:S.turn}); }
   try { if (store) store.removeItem(SAVE_KEY); } catch (_) {}
   const title = lost ? 'Ваши армии разбиты…' : winner ? `${winner.name} — властители Иллурии!` : 'Все пали…';
   showModal(`<h2 style="color:${winner ? winner.color : '#fff'}">${title}</h2><p>Ход ${S.turn}.</p>`, [{t:'В меню', fn:() => openMenu()}]);
@@ -1339,6 +1346,8 @@ function loadGame(){
   o.terr = o.terr.split('').map(Number); o.road = o.road.split('').map(Number);
   for (const f of o.factions) f.explored = Uint8Array.from(f.explored.split('').map(Number));
   S = o; buildCityGrid(); renderTerrain();
+  if (window.GA) { GA.event(REALM_EVENT.GAME_LOAD, {turn:S.turn});
+    GA.start({loaded:true, turn:S.turn, players:S.factions.length, humans:S.factions.filter(f => f.human).length}, {leaveIsQuit:false}); }
   vis = []; for (const f of S.factions) computeVis(f.id);
   mover = null; driver = null; modal = false; sel = null; preview = null;
   viewerIdx = S.factions[S.cur].human ? S.cur : (S.factions.find(f => f.human) || {id:-1}).id;
@@ -1402,6 +1411,7 @@ function newGame(){
   if (c0) centerOn(c0.x, c0.y); cam.z = 1;
   $('toast').textContent = '';
   closeMenu();
+  if (window.GA) GA.start({players:nf, humans:S.factions.filter(f => f.human).length, size:cfg.size, difficulty:cfg.diff, fog:cfg.fog}, {leaveIsQuit:false});
   beginTurn();
 }
 $('newBtn').onclick = e => { e.currentTarget.blur(); newGame(); };

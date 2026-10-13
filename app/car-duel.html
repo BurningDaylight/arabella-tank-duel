@@ -56,6 +56,7 @@ th{color:#998;font-weight:normal}
 </head>
 <body>
 <div id="err"></div>
+<script src="analytics.js" data-game="car-duel"></script>
 <script>
 window.addEventListener('error', function (e) {
   var d = document.getElementById('err'); if (!d) return;
@@ -499,6 +500,7 @@ function startRace(){
   const i = season.cur, tr = genTrack(season.tracks[i], TRACK_NAMES[i % TRACK_NAMES.length]);
   const cars = season.drivers.map((d, k) => makeCar(d, tr, -10 - Math.floor(k / 2) * 10, (k % 2 ? 1 : -1) * 13));
   race = {mode:'champ', track:tr, cars, state:'countdown', t:3.2, finishCount:0, pick:[], pickT:rnd(3, 6), endT:0, lastBeep:4};
+  if (window.GA) GA.start({mode:'champ', track:tr.name, race:i + 1, races:season.tracks.length, humans:+cfg.humans, difficulty:cfg.diff});
   particles = []; msgs = [];
   enterRaceUI();
 }
@@ -509,6 +511,7 @@ function startDuel(){
   d1.nitro = d2.nitro = START_NITRO;
   const cars = [makeCar(d1, tr, 0, -13), makeCar(d2, tr, 0, 13)];
   race = {mode:'duel', track:tr, cars, state:'countdown', t:3.2, pick:[], pickT:rnd(3, 6), score:[0, 0], freeze:0, lastBeep:4};
+  if (window.GA) GA.start({mode:'duel', track:tr.name, humans:two ? 2 : 1, difficulty:cfg.diff});
   cam.x = tr.pts[0].x; cam.y = tr.pts[0].y;
   particles = []; msgs = [];
   enterRaceUI();
@@ -622,6 +625,8 @@ function endRace(){
   const r = race; if (r.state !== 'race') return;
   r.state = 'done';
   const ord = order();
+  if (window.GA) { const hp = ord.map((c, k) => c.d.human ? k + 1 : 0).filter(Boolean);
+    GA.end(hp.length > 1 ? GA.RESULT.PVP : hp[0] === 1 ? GA.RESULT.WIN : GA.RESULT.LOSE, {place:hp.join(',')}); }
   const rows = ord.map((c, i) => {
     const prize = PRIZE[i] || 0, pts = POINTS[i] || 0;
     c.d.money += prize + c.earned; c.d.points += pts; c.d.nitro = c.nitro;
@@ -678,6 +683,7 @@ function showShop(){
 function showFinal(){
   const st = season.drivers.slice().sort((a, b) => b.points - a.points);
   const champ = st[0];
+  if (window.GA) GA.event(CAR_EVENT.CHAMP_END, {place:st.map((d, k) => d.human ? k + 1 : 0).filter(Boolean).join(','), champion:champ.human ? 'human' : 'ai'});
   $('finBody').innerHTML = `<h2 style="color:${champ.color}">🏆 Чемпион: ${champ.name}!</h2>
     <table><tr><th>#</th><th></th><th>Очки</th><th>Деньги</th></tr>${st.map((d, i) => `<tr><td>${i + 1}</td><td style="color:${d.color};text-align:left">■ ${d.name}</td><td>${d.points}</td><td>$${d.money}</td></tr>`).join('')}</table>`;
   if (champ.human) sfx('win');
@@ -688,6 +694,7 @@ function showFinal(){
   $('againBtn').onclick = () => { $('fin').classList.remove('show'); newSeason(); };
 }
 function showDuelEnd(w){
+  if (window.GA) GA.end(race.cars.every(c => c.human) ? GA.RESULT.PVP : w.human ? GA.RESULT.WIN : GA.RESULT.LOSE, {score:race.score[0] + ':' + race.score[1]});
   $('finBody').innerHTML = `<h2 style="color:${w.color}">🏁 Дуэль выиграл ${w.name}!</h2><p style="font-size:20px;color:#fff">${race.score[0]} : ${race.score[1]}</p><p>Трасса: ${race.track.name}</p>`;
   if (w.human) sfx('win');
   $('touch').innerHTML = '';
@@ -695,6 +702,8 @@ function showDuelEnd(w){
   $('fin').classList.add('show');
   $('againBtn').onclick = () => { $('fin').classList.remove('show'); startDuel(); };
 }
+// analytics: a level is one race (champ) or one duel; the championship has its own start/end events
+const CAR_EVENT = window.GA ? GA.defineEvents({CHAMP_START:'car_champ_start', CHAMP_END:'car_champ_end'}) : {};
 function newSeason(){
   const n = +cfg.tracks, humans = +cfg.humans, P = AIP[cfg.diff] || AIP.normal;
   const drivers = [];
@@ -704,6 +713,7 @@ function newSeason(){
     drivers.push(d);
   }
   season = {tracks:Array.from({length:n}, (_, i) => trackSeed(i)), cur:0, drivers, laps:+cfg.laps};
+  if (window.GA) GA.event(CAR_EVENT.CHAMP_START, {races:n, humans:humans, difficulty:cfg.diff, laps:+cfg.laps});
   saveSeason();
   startRace();
 }
