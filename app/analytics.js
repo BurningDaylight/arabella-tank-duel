@@ -51,6 +51,7 @@
     gtag('config', CONFIG.id, cfg);
     if (CONFIG.consent === 'banner') loadBanner();
   }
+  if (log) console.debug('[ga] page_view (auto)', Object.assign({page:location.pathname}, common));
   if (log) console.info('[ga] ' + (off ? 'off (' + (placeholder ? 'placeholder id' : env === 'file' ? 'file://' : 'disabled') + ')' : 'on') + ' · game=' + game + ' · env=' + env);
 
   function clean(o){ var r = {}; for (var k in o) if (o[k] !== undefined && o[k] !== null && o[k] !== '') r[k] = o[k]; return r; }
