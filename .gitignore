@@ -4,3 +4,4 @@
 *.bak
 *.bak2
 *.diff
+.env.ga
