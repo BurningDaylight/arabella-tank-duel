@@ -25,8 +25,8 @@ function findFile(p){
 }
 
 const argv = process.argv.slice(2);
-let run = 'latest', mean = 15, merge = null;
-for (let i = 0; i < argv.length; i++) { if (argv[i] === '--mean') mean = +argv[++i]; else if (argv[i] === '--merge') merge = argv[++i]; else run = argv[i]; }
+let run = 'latest', mean = 15, merge = null, asName = null, note = null;
+for (let i = 0; i < argv.length; i++) { if (argv[i] === '--mean') mean = +argv[++i]; else if (argv[i] === '--merge') merge = argv[++i]; else if (argv[i] === '--as') asName = argv[++i]; else if (argv[i] === '--note') note = argv[++i]; else run = argv[i]; }
 let file, d;
 try { file = findFile(run); d = JSON.parse(readFileSync(file, 'utf8')); } catch (e) { console.error(e.message); process.exit(1); }
 const S = d.ships, n = S.length, cell = (a, b) => d.matrix[S[a].i + ',' + S[b].i];
@@ -74,6 +74,11 @@ if (merge) {
       sec = m[1].trim().toLowerCase(); out.push(line);
       if (sec.startsWith('ship.') && costs[sec.slice(5)] !== undefined) { out.push('cost = ' + costs[sec.slice(5)]); seen.add(sec.slice(5)); }
       continue;
+    }
+    // --as: new set name; old version becomes based_on, note is replaced
+    if (sec === 'meta' && asName) {
+      const mm = line.match(/^\s*(version|based_on|note)\s*=\s*(.*)$/);
+      if (mm) { if (mm[1] === 'version') out.push('version = ' + asName, 'based_on = ' + mm[2].trim(), 'note = ' + (note || 'fleet costs from ' + basename(dirname(file)))); continue; }
     }
     if (sec && sec.startsWith('ship.') && /^\s*cost\s*=/.test(line)) continue;
     out.push(line);
