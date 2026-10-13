@@ -40,25 +40,13 @@ a.card:active{transform:translateY(0)}
 .ns h2{color:#6a9af0}
 .ns .play{background:#2a4a9a;border-color:#8af}
 
-.footer{margin-top:32px;font-size:12px;color:#666;text-align:center;line-height:1.6;max-width:560px}
+.realm h2{color:#9fe070}
+.realm .play{background:#2a5a1a;border-color:#8d6}
+
+footer{margin-top:32px;font-size:12px;color:#666;text-align:center;line-height:1.6;max-width:560px}
 </style>
 </head>
-<script src="analytics.js" data-game="index"></script>
-<script>
-// analytics: which game is opened from the index page (GA recommended event select_content)
-(function () {
-  if (!window.GA) return;
-  var INDEX_EVENT = GA.defineEvents({GAME_OPEN:'select_content'});
-  document.addEventListener('click', function (e) {
-    var a = e.target.closest && e.target.closest('a.card');
-    if (!a) return;
-    var game = (a.getAttribute('href') || '').replace(/^.*\//, '').replace(/\.html?$/, '');
-    // beacon transport: the event must survive the page navigation that follows the click
-    GA.event(INDEX_EVENT.GAME_OPEN, {content_type:'game', content_id:game, transport_type:'beacon'});
-  });
-})();
-</script>
-</<body>
+<body>
   <h1>РЕТРО-ДУЭЛИ</h1>
   <p class="sub">по мотивам DOS-классики начала 90-х</p>
 
@@ -129,5 +117,20 @@ a.card:active{transform:translateY(0)}
     На телефоне лучше играть горизонтально. Через меню браузера «⋮ → Добавить на главный экран» можно поставить игры иконкой.<br>
     Звуки — CC0 (opengameart.org, kenney.nl).
   </footer>
+<script src="analytics.js" data-game="index"></script>
+<script>
+// analytics: which game is opened from the index page (GA recommended event select_content)
+(function () {
+  if (!window.GA) return;
+  var INDEX_EVENT = GA.defineEvents({GAME_OPEN:'select_content'});
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a.card');
+    if (!a) return;
+    var game = (a.getAttribute('href') || '').replace(/^.*\//, '').replace(/\.html?$/, '');
+    // beacon transport: the event must survive the page navigation that follows the click
+    GA.event(INDEX_EVENT.GAME_OPEN, {content_type:'game', content_id:game, transport_type:'beacon'});
+  });
+})();
+</script>
 </body>
 </html>
